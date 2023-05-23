@@ -9,6 +9,8 @@ Momentum is a fork (skid) of the Fortnite Backend LawinServer. It is aimed to im
 I just released a new NPM package called "MomentumSDK" which allows you to easily interact with Momentum. You can find it here:
 
 [![NPM](https://nodei.co/npm/momentumsdk.png?downloads=true&downloadRank=true&stars=true)](https://npmjs.org/momentumsdk)
+### ToDo:
+- [ ] Recode additem and further
 
 ### Check out the new documentation here https://docs.nexusfn.net/
 
