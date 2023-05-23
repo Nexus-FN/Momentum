@@ -5,6 +5,7 @@ const app = express();
 const mongoose = require("mongoose");
 const fs = require("fs");
 import path from 'path';
+console.log(path.resolve(__dirname, '../.env'));
 import logger from './structs/log';
 const rateLimit = require("express-rate-limit");
 const jwt = require("jsonwebtoken");
@@ -12,6 +13,7 @@ const error = require("./structs/error.js");
 const functions = require("./structs/functions.js");
 const dotenv = require("dotenv");
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') })
+
 import kv from './utilities/kv';
 import log from './structs/log';
 import safety from './utilities/safety';

@@ -29,7 +29,7 @@ module.exports = {
         const selectedUser = interaction.options.getUser('user');
         const selectedUserId:Number = selectedUser.id;
 
-        const user = await Users.findOne({ discordId:  selectedUserId });
+        const user = await Users.findOne({where: { discordId:  selectedUserId }});
         if (!user) return interaction.reply({ content: "That user does not own an account", ephemeral: true });
 
 		const vbucks:number = interaction.options.getString('vbucks');

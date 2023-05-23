@@ -5,28 +5,34 @@ const app = express.Router();
 const functions = require("../structs/functions.js");
 
 const { verifyApikey } = require("../utilities/api.js");
-const User = require("../model/user.js");
+const User = require("../model/user-gres.js");
 const Api = require("../model/api.js");
 
 
 
-app.get("/api/user/:key/:value", verifyApikey, (req, res) => {
+app.get("/api/user/:key/:value", verifyApikey, async (req, res) => {
 
-    const { key } = req.params;
-    const { value } = req.params;
+    const { key, value } = req.params;
 
-    const query = {};
-    query[key] = value;
-
-    User.findOne(query, { password: 0, _id: 0 }, (err, user) => {
-        if (err) return res.status(500).json({ error: "Internal server error" });
-        if (!user) return res.status(404).json({ error: "User not found" });
-
-        user.password = "[REDACTED]";
-
-        res.status(200).json(user);
-    });
-
+    try {
+      const user = await User.findOne({
+        where: {
+          [key]: value
+        },
+        attributes: { exclude: ['password', '_id'] }
+      });
+  
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+  
+      user.password = "[REDACTED]";
+  
+      res.status(200).json(user);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Internal server error" });
+    }
 });
 
 app.post("/api/user/:key/:value", verifyApikey, (req, res) => {

@@ -2,8 +2,8 @@ export { };
 
 const express = require("express");
 const app = express.Router();
-const Profile = require("../model/profiles.js");
-const Friends = require("../model/friends.js");
+const Profile = require("../model/profiles-gres.js");
+const Friends = require("../model/friends-gres.js");
 const functions = require("../structs/functions.js");
 const error = require("../structs/error.js");
 
@@ -24,7 +24,7 @@ app.get("/fortnite/api/storefront/v2/gift/check_eligibility/recipient/:recipient
         [req.params.offerId], 16027, undefined, 400, res
     );
 
-    let sender = await Friends.findOne({ accountId: req.user.accountId }).lean();
+    let sender = await Friends.findOne({where: { accountId: req.user.accountId }}).lean();
 
     if (!sender.list.accepted.find(i => i.accountId == req.params.recipientId) && req.params.recipientId != req.user.accountId) return error.createError(
         "errors.com.epicgames.friends.no_relationship",
@@ -32,7 +32,7 @@ app.get("/fortnite/api/storefront/v2/gift/check_eligibility/recipient/:recipient
         [req.user.accountId, req.params.recipientId], 28004, undefined, 403, res
     );
 
-    const profiles = await Profile.findOne({ accountId: req.params.recipientId });
+    const profiles = await Profile.findOne({where: { accountId: req.params.recipientId }});
 
     let athena = profiles.profiles["athena"];
 

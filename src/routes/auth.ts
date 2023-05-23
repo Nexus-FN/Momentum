@@ -14,7 +14,8 @@ const functions = require("../structs/functions.js");
 
 const tokenCreation = require("../tokenManager/tokenCreation.js");
 const { verifyToken, verifyClient } = require("../tokenManager/tokenVerify.js");
-const User = require("../model/user.js");
+const User = require("../model/user-gres.js");
+
 
 const kvjs = require('@heyputer/kv.js');
 

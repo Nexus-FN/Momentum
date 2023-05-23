@@ -5,7 +5,7 @@ const app = express.Router();
 
 const functions = require("../structs/functions.js");
 
-const Friends = require("../model/friends.js");
+const Friends = require("../model/friends-gres.js");
 const friendManager = require("../structs/friend.js");
 
 const { verifyToken, verifyClient } = require("../tokenManager/tokenVerify.js");
@@ -25,7 +25,7 @@ app.get("/friends/api/public/list/fortnite/*/recentPlayers", (req, res) => {
 app.get("/friends/api/public/friends/:accountId", verifyToken, async (req, res) => {
     let response:Object[] = [];
 
-    const friends = await Friends.findOne({ accountId: req.user.accountId }).lean();
+    const friends = await Friends.findOne({ where:{ accountId: req.user.accountId }}).lean();
 
     friends.list.accepted.forEach(acceptedFriend => {
         response.push({
@@ -61,8 +61,8 @@ app.get("/friends/api/public/friends/:accountId", verifyToken, async (req, res) 
 });
 
 app.post("/friends/api/*/friends*/:receiverId", verifyToken, async (req, res) => {
-    let sender = await Friends.findOne({ accountId: req.user.accountId });
-    let receiver = await Friends.findOne({ accountId: req.params.receiverId });
+    let sender = await Friends.findOne({ where: { accountId: req.user.accountId }});
+    let receiver = await Friends.findOne({where: { accountId: req.params.receiverId }});
     if (!sender || !receiver) return res.status(403).end();
 
     if (sender.list.incoming.find(i => i.accountId == receiver.accountId)) {
@@ -78,8 +78,8 @@ app.post("/friends/api/*/friends*/:receiverId", verifyToken, async (req, res) =>
 });
 
 app.delete("/friends/api/*/friends*/:receiverId", verifyToken, async (req, res) => {
-    let sender = await Friends.findOne({ accountId: req.user.accountId });
-    let receiver = await Friends.findOne({ accountId: req.params.receiverId });
+    let sender = await Friends.findOne({ where: { accountId: req.user.accountId }});
+    let receiver = await Friends.findOne({ where: { accountId: req.params.receiverId }});
     if (!sender || !receiver) return res.status(403).end();
 
     if (!await friendManager.deleteFriend(sender.accountId, receiver.accountId)) return res.status(403).end();
@@ -91,8 +91,8 @@ app.delete("/friends/api/*/friends*/:receiverId", verifyToken, async (req, res) 
 });
 
 app.post("/friends/api/*/blocklist*/:receiverId", verifyToken, async (req, res) => {
-    let sender = await Friends.findOne({ accountId: req.user.accountId });
-    let receiver = await Friends.findOne({ accountId: req.params.receiverId });
+    let sender = await Friends.findOne({ where: { accountId: req.user.accountId }});
+    let receiver = await Friends.findOne({ where: { accountId: req.params.receiverId }});
     if (!sender || !receiver) return res.status(403).end();
 
     if (!await friendManager.blockFriend(sender.accountId, receiver.accountId)) return res.status(403).end();
@@ -104,8 +104,8 @@ app.post("/friends/api/*/blocklist*/:receiverId", verifyToken, async (req, res) 
 });
 
 app.delete("/friends/api/*/blocklist*/:receiverId", verifyToken, async (req, res) => {
-    let sender = await Friends.findOne({ accountId: req.user.accountId });
-    let receiver = await Friends.findOne({ accountId: req.params.receiverId });
+    let sender = await Friends.findOne({ where: { accountId: req.user.accountId }});
+    let receiver = await Friends.findOne({ where: { accountId: req.params.receiverId }});
     if (!sender || !receiver) return res.status(403).end();
 
     if (!await friendManager.deleteFriend(sender.accountId, receiver.accountId)) return res.status(403).end();
@@ -125,7 +125,7 @@ app.get("/friends/api/v1/:accountId/summary", verifyToken, async (req, res) => {
         }
     }
 
-    const friends = await Friends.findOne({ accountId: req.user.accountId }).lean();
+    const friends = await Friends.findOne({ where: { accountId: req.user.accountId }}).lean();
 
     friends.list.accepted.forEach(acceptedFriend => {
         response.friends.push({
@@ -165,7 +165,7 @@ app.get("/friends/api/v1/:accountId/summary", verifyToken, async (req, res) => {
 });
 
 app.get("/friends/api/public/blocklist/*", verifyToken, async (req, res) => {
-    let friends = await Friends.findOne({ accountId: req.user.accountId }).lean();
+    let friends = await Friends.findOne({ where: { accountId: req.user.accountId }}).lean();
 
     res.json({
         "blockedUsers": friends.list.blocked.map(i => i.accountId)

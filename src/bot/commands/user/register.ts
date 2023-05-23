@@ -1,6 +1,6 @@
 import { EmbedBuilder } from "discord.js";
 import log from "../../../structs/log";
-const Users = require('../../../model/user');
+const Users = require('../../../model/user-gres');
 
 export { }
 
@@ -26,7 +26,7 @@ module.exports = {
 
 
 	async execute(interaction) {
-
+		
 		await interaction.deferReply({ ephemeral: true });
 
 		const discordId = interaction.user.id;
@@ -34,7 +34,7 @@ module.exports = {
 		const email = interaction.options.getString('email');
 		const plainPassword = interaction.options.getString('password');
 
-		const user = await Users.findOne({ discordId: interaction.user.id });
+		const user = await Users.findOne({ where: { discordId: interaction.user.id }});
         if (user) return interaction.editReply({ content: "You are already registered!", ephemeral: true });
 
 		await functions.registerUser(discordId, username, email, plainPassword, false).then(async (res) => {

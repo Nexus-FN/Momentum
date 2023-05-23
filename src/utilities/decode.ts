@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 const { DateAddHours } = require("../structs/functions.js")
-const User = require("../model/user.js");
+const User = require("../model/user-gres.js");
 
 class decode {
 
@@ -12,7 +12,7 @@ class decode {
 
         if (!global.accessTokens.find(i => i.token == `eg1~${token}`)) throw new Error("Invalid token.");
         
-        const user = await User.findOne({ accountId: decodedToken.sub });
+        const user = await User.findOne({where: { accountId: decodedToken.sub }});
 
         return user;
     }

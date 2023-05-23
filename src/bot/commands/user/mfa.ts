@@ -4,8 +4,8 @@ import { EmbedBuilder } from "discord.js";
 export { }
 
 const { SlashCommandBuilder } = require('discord.js');
-const Users = require('../../../model/user');
-const Profiles = require('../../../model/profiles');
+const Users = require('../../../model/user-gres');
+const Profiles = require('../../../model/profiles-gres');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -28,10 +28,11 @@ module.exports = {
             });
         }
 
-        const updatedUser = await Users.findOneAndUpdate({ discordId: interaction.user.id }, { mfa: !user.mfa }, { new: true });
+        user.mfa = !user.mfa;
+        await user.save();
 
         const embed = new EmbedBuilder()
-            .setTitle(`MFA ${updatedUser.mfa ? "Enabled" : "Disabled"}`)
+            .setTitle(`MFA ${user.mfa ? "Enabled" : "Disabled"}`)
             .setDescription("MFA has been toggled")
             .setColor("#2b2d31")
             .addFields([

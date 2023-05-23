@@ -4,9 +4,9 @@ import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from "disc
 export { }
 
 const { SlashCommandBuilder } = require('discord.js');
-const Users = require('../../../model/user');
-const Profiles = require('../../../model/profiles');
-const Friends = require('../../../model/friends');
+const Users = require('../../../model/user-gres');
+const Profiles = require('../../../model/profiles-gres');
+const Friends = require('../../../model/friends-gres');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -15,7 +15,7 @@ module.exports = {
 
     async execute(interaction) {
 
-        const user = await Users.findOne({ discordId: interaction.user.id });
+        const user = await Users.findOne({ where:{ discordId: interaction.user.id }});
         if (!user) return interaction.reply({ content: "You are not registered!", ephemeral: true });
 
         const confirm = new ButtonBuilder()
@@ -53,9 +53,9 @@ module.exports = {
             const confirmation = await confirmationResponse.awaitMessageComponent({ filter, time: 10000 });
 
             if (confirmation.customId === 'confirm') {
-                await Users.findOneAndDelete({ discordId: interaction.user.id });
-                await Profiles.findOneAndDelete({ accountId: await user.accountId });
-                await Friends.findOneAndDelete({ accountId: await user.accountId });
+                await Users.findOne({ where: { discordId: interaction.user.id }}).then(user => user.destroy());
+                await Profiles.findOne({ where: { accountId: await user.accountId }}).then(profiles => profiles.destroy());
+                await Friends.findOne({ where: { accountId: await user.accountId }}).then(friends => friends.destroy());
 
                 const embed = new EmbedBuilder()
                     .setTitle(`Account Deleted`)

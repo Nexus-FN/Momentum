@@ -10,10 +10,10 @@ const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
 
-const User = require("../model/user.js");
-const Profile = require("../model/profiles.js");
+const User = require("../model/user-gres.js");
+const Profile = require("../model/profiles-gres.js");
 const profileManager = require("../structs/profile");
-const Friends = require("../model/friends.js");
+const Friends = require("../model/friends-gres.js");
 
 async function sleep(ms) {
     await new Promise((resolve, reject) => {
@@ -280,7 +280,7 @@ async function registerUser(discordId: any, username: string, email: string, pla
 
     if (!discordId || !username || !email || !plainPassword) return { message: "Username/email/password is required.", status: 400 };
 
-    if (await User.findOne({ discordId })) return { message: "You already created an account!", status: 400 };
+    if (await User.findOne({where: { discordId }})) return { message: "You already created an account!", status: 400 };
 
     const accountId = MakeID().replace(/-/ig, "");
 

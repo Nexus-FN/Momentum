@@ -3,7 +3,7 @@ export { }
 import { Hash } from "crypto";
 import { EmbedBuilder } from "discord.js";
 import Asteria from "asteriasdk";
-
+import { DataTypes, Model, Sequelize } from 'sequelize';
 const asteria = new Asteria({
     collectAnonStats: true,
     throwErrors: true,
@@ -11,7 +11,10 @@ const asteria = new Asteria({
 
 const { SlashCommandBuilder } = require('discord.js');
 const Users = require('../../../model/user');
+const gresUser = require('../../../model/user-gres');
+
 const Profiles = require('../../../model/profiles');
+const gresProfiles = require('../../../model/profiles-gres');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -19,10 +22,11 @@ module.exports = {
         .setDescription('Shows you your account information'),
 
     async execute(interaction) {
-        const user = await Users.findOne({ discordId: interaction.user.id });
+        const user = await gresUser.findOne({ where: { discordId: interaction.user.id } });
+        console.log("user: ", user);
         if (!user) return interaction.reply({ content: "You are not registered!", ephemeral: true });
 
-        const profile = await Profiles.findOne({ accountId: user.accountId });
+        const profile = await gresProfiles.findOne({ where: { accountId: user.accountId } });
 
         const selectedSkin = profile.profiles.athena.stats.attributes.favorite_character;
         const selectedSkinSplit = selectedSkin.split(":") || "CID_005_Athena_Commando_M_Default";

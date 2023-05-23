@@ -2,7 +2,7 @@ export { };
 
 const jwt = require("jsonwebtoken");
 
-const User = require("../model/user.js");
+const User = require("../model/user-gres.js");
 const functions = require("../structs/functions.js");
 const error = require("../structs/error.js");
 
@@ -30,7 +30,7 @@ async function verifyToken(req, res, next) {
             throw new Error("Expired access token.");
         }
 
-        req.user = await User.findOne({ accountId: decodedToken.sub }).lean();
+        req.user = await User.findOne({where: { accountId: decodedToken.sub }}).lean();
 
         if (req.user.banned) return error.createError(
             "errors.com.epicgames.account.account_not_active",
@@ -74,7 +74,7 @@ async function verifyClient(req, res, next) {
         }
 
         if (findAccess) {
-            req.user = await User.findOne({ accountId: decodedToken.sub }).lean();
+            req.user = await User.findOne({where: { accountId: decodedToken.sub }}).lean();
 
             if (req.user.banned) return error.createError(
                 "errors.com.epicgames.account.account_not_active",

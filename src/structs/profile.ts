@@ -22,7 +22,7 @@ async function createProfiles(accountId: string) {
         log.debug(`Created profile ${profile.profileId} for account ${accountId}`);
     });
 
-    return profiles;
+    return JSON.parse(JSON.stringify(profiles));
 }
 
 async function validateProfile(profileId, profiles) {
