@@ -25,7 +25,7 @@ app.get("/friends/api/public/list/fortnite/*/recentPlayers", (req, res) => {
 app.get("/friends/api/public/friends/:accountId", verifyToken, async (req, res) => {
     let response:Object[] = [];
 
-    const friends = await Friends.findOne({ where:{ accountId: req.user.accountId }}).lean();
+    const friends = await Friends.findOne({ where:{ accountId: req.user.accountId }});
 
     friends.list.accepted.forEach(acceptedFriend => {
         response.push({
@@ -125,7 +125,7 @@ app.get("/friends/api/v1/:accountId/summary", verifyToken, async (req, res) => {
         }
     }
 
-    const friends = await Friends.findOne({ where: { accountId: req.user.accountId }}).lean();
+    const friends = await Friends.findOne({ where: { accountId: req.user.accountId }});
 
     friends.list.accepted.forEach(acceptedFriend => {
         response.friends.push({
@@ -165,7 +165,7 @@ app.get("/friends/api/v1/:accountId/summary", verifyToken, async (req, res) => {
 });
 
 app.get("/friends/api/public/blocklist/*", verifyToken, async (req, res) => {
-    let friends = await Friends.findOne({ where: { accountId: req.user.accountId }}).lean();
+    let friends = await Friends.findOne({ where: { accountId: req.user.accountId }});
 
     res.json({
         "blockedUsers": friends.list.blocked.map(i => i.accountId)

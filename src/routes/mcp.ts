@@ -11,6 +11,7 @@ const profileManager = require("../structs/profile.js");
 const Friends = require("../model/friends-gres");
 const error = require("../structs/error.js");
 const functions = require("../structs/functions.js");
+import sequelize from "sequelize";
 
 const { verifyToken, verifyClient } = require("../tokenManager/tokenVerify.js");
 
@@ -151,7 +152,7 @@ app.post("/fortnite/api/game/v2/profile/*/client/GiftCatalogEntry", verifyToken,
         undefined, 16027, undefined, 400, res
     );
 
-    let sender = await Friends.findOne({where: { accountId: req.user.accountId }}).lean();
+    let sender = await Friends.findOne({where: { accountId: req.user.accountId }});
 
     for (let receiverId of req.body.receiverAccountIds) {
         if (typeof receiverId != "string") return error.createError(
@@ -908,9 +909,13 @@ app.post("/fortnite/api/game/v2/profile/*/client/SetBattleRoyaleBanner", verifyT
         responseVersion: 1
     });
     if (ApplyProfileChanges.length > 0)
-        await profiles.update({
-            [`profiles.${req.query.profileId}`]: profile
-        });
+
+        
+        await profiles.update(
+            {
+              profiles: sequelize.literal(`jsonb_set(profiles, '{${req.query.profileId}}', '${JSON.stringify(profile)}', true)`)
+            }
+          );
 
 });
 
@@ -1117,9 +1122,12 @@ app.post("/fortnite/api/game/v2/profile/*/client/EquipBattleRoyaleCustomization"
         responseVersion: 1
     });
     if (ApplyProfileChanges.length > 0)
-        await profiles.update({
-            [`profiles.${req.query.profileId}`]: profile
-        });
+
+        profiles.update(
+            {
+              profiles: sequelize.literal(`jsonb_set(profiles, '{${req.query.profileId}}', '${JSON.stringify(profile)}', true)`)
+            }
+          );
 
 });
 
@@ -1509,8 +1517,10 @@ app.post("/fortnite/api/game/v2/profile/:accountId/dedicated_server/:operation",
 });
 
 app.post("/fortnite/api/game/v2/profile/*/client/:operation", verifyToken, async (req, res) => {
+    // Get the users profile in the profiles table
     const profiles = await Profile.findOne({where:{ accountId: req.user.accountId }});
-
+   
+    // Check if the profile exists
     if (!await profileManager.validateProfile(req.query.profileId, profiles)) return error.createError(
         "errors.com.epicgames.modules.profiles.operation_forbidden",
         `Unable to find template configuration for profile ${req.query.profileId}`,
@@ -1518,6 +1528,7 @@ app.post("/fortnite/api/game/v2/profile/*/client/:operation", verifyToken, async
     );
 
     let profile = profiles.profiles[req.query.profileId];
+    console.log(profile);
 
     if (profile.rvn == profile.commandRevision) {
         profile.rvn += 1;
@@ -1526,10 +1537,14 @@ app.post("/fortnite/api/game/v2/profile/*/client/:operation", verifyToken, async
             if (!profile.stats.attributes.last_applied_loadout) profile.stats.attributes.last_applied_loadout = profile.stats.attributes.loadouts[0];
         }
 
-        await Profile.update({
-            [`profiles.${req.query.profileId}`]: profile
-        },
-            { where: { accountId: req.user.accountId } });
+        // Assuming you have the 'req' and 'profile' variables defined
+        await Profile.update(
+          {
+            profiles: sequelize.literal(`jsonb_set(profiles, '{${req.query.profileId}}', '${JSON.stringify(profile)}', true)`)
+          },
+          { where: { accountId: req.user.accountId } }
+        );
+        
     }
 
     const memory = functions.GetVersionInfo(req);
@@ -1717,7 +1732,7 @@ app.post("/fortnite/api/game/v2/profile/*/client/:operation", verifyToken, async
 });
 
 app.post("/fortnite/api/game/v2/profile/:accountId/dedicated_server/:operation", async (req, res) => {
-    const profiles = await Profile.findOne({where:{ accountId: req.params.accountId }}).lean();
+    const profiles = await Profile.findOne({where:{ accountId: req.params.accountId }});
     if (!profiles) return res.status(404).json({});
 
     if (!await profileManager.validateProfile(req.query.profileId, profiles)) return error.createError(

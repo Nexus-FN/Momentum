@@ -1,5 +1,6 @@
 export { };
 
+
 const express = require("express");
 const app = express();
 const mongoose = require("mongoose");
@@ -19,8 +20,11 @@ import log from './structs/log';
 import safety from './utilities/safety';
 import update from './utilities/update';
 import process from 'node:process';
+import { DataTypes, Model, Sequelize } from 'sequelize';
 
 const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, "../package.json")).toString());
+const sequelize = new Sequelize('postgres://server:Munano123@localhost:5432/fortniteserver');
+export default sequelize;
 
 process.once('SIGTERM', async function (code) {
     console.log('SIGTERM received...');
@@ -90,8 +94,11 @@ async function main() {
     global.clientTokens = tokens.clientTokens;
 
     global.exchangeCodes = [];
+    // Connect sequelize to postgres
+    const sequelize = new Sequelize('postgres://server:Munano123@localhost:5432/fortniteserver');
 
     mongoose.set("strictQuery", true);
+
 
     mongoose
         .connect(safety.env.MONGO_URI)

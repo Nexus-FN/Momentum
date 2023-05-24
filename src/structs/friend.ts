@@ -1,11 +1,13 @@
+import { Console } from "console";
+
 export { };
 
 const Friends = require("../model/friends-gres.js");
 const functions = require("../structs/functions.js");
 
 async function validateFriendAdd(accountId, friendId) {
-    let sender = await Friends.findOne({where: { accountId: accountId }}).lean();
-    let receiver = await Friends.findOne({where: { accountId: friendId }}).lean();
+    let sender = await Friends.findOne({where: { accountId: accountId }});
+    let receiver = await Friends.findOne({where: { accountId: friendId }});
     if (!sender || !receiver) return false;
 
     if (sender.list.accepted.find(i => i.accountId == receiver.accountId) || receiver.list.accepted.find(i => i.accountId == sender.accountId)) return false;
@@ -16,16 +18,16 @@ async function validateFriendAdd(accountId, friendId) {
 }
 
 async function validateFriendDelete(accountId, friendId) {
-    let sender = await Friends.findOne({where: { accountId: accountId }}).lean();
-    let receiver = await Friends.findOne({where: { accountId: friendId }}).lean();
+    let sender = await Friends.findOne({where: { accountId: accountId }});
+    let receiver = await Friends.findOne({where: { accountId: friendId }});
     if (!sender || !receiver) return false;
 
     return true;
 }
 
 async function validateFriendBlock(accountId, friendId) {
-    let sender = await Friends.findOne({where: { accountId: accountId }}).lean();
-    let receiver = await Friends.findOne({where: { accountId: friendId }}).lean();
+    let sender = await Friends.findOne({where: { accountId: accountId }});
+    let receiver = await Friends.findOne({where: { accountId: friendId }});
     if (!sender || !receiver) return false;
 
     if (sender.list.blocked.find(i => i.accountId == receiver.accountId)) return false;
@@ -70,10 +72,23 @@ async function sendFriendReq(fromId, toId) {
         "type": "com.epicgames.friends.core.apiobjects.Friend",
         "timestamp": new Date().toISOString()
     }, to.accountId);
+    console.log("fromFriends: " + fromFriends + " toFriends: " + toFriends);
 
-    await from.updateOne({ $set: { list: fromFriends } });
-    await to.updateOne({ $set: { list: toFriends } });
+    await Friends.update({
+        list: fromFriends,
+    }, {
+        where: {
+            accountId: from.accountId
+        }
+    });
 
+    await Friends.update({
+        list: toFriends,
+    }, {
+        where: {
+            accountId: to.accountId
+        }
+    });
     return true;
 }
 
@@ -119,8 +134,21 @@ async function acceptFriendReq(fromId, toId) {
             "timestamp": new Date().toISOString()
         }, to.accountId);
 
-        await from.updateOne({ $set: { list: fromFriends } });
-        await to.updateOne({ $set: { list: toFriends } });
+        await Friends.update({
+            list: fromFriends,
+        }, {
+            where: {
+                accountId: from.accountId
+            }
+        });
+        
+        await Friends.update({
+            list: toFriends,
+        }, {
+            where: {
+                accountId: to.accountId
+            }
+        });
     }
 
     return true;
@@ -170,8 +198,20 @@ async function deleteFriend(fromId, toId) {
             "timestamp": new Date().toISOString()
         }, to.accountId);
 
-        await from.updateOne({ $set: { list: fromFriends } });
-        await to.updateOne({ $set: { list: toFriends } });
+        await Friends.update({
+            list: fromFriends,
+        }, {
+            where: {
+                accountId: from.accountId
+            }
+        });
+        await Friends.update({
+            list: toFriends,
+        }, {
+            where: {
+                accountId: to.accountId
+            }
+        });
     }
 
     return true;

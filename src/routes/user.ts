@@ -6,13 +6,13 @@ const app = express.Router();
 const error = require("../structs/error.js");
 
 const { verifyToken, verifyClient } = require("../tokenManager/tokenVerify.js");
-const User = require("../model/user.js");
+const User = require("../model/user-gres.js");
 
 app.get("/account/api/public/account", async (req, res) => {
     let response:Object[] = [];
 
     if (typeof req.query.accountId == "string") {
-        let user = await User.findOne({ accountId: req.query.accountId, banned: false }).lean();
+        let user = await User.findOne({where: { accountId: req.query.accountId, banned: false }});
 
         if (user) {
             response.push({
@@ -24,7 +24,7 @@ app.get("/account/api/public/account", async (req, res) => {
     }
 
     if (Array.isArray(req.query.accountId)) {
-        let users = await User.find({ accountId: { $in: req.query.accountId }, banned: false }).lean();
+        let users = await User.find({where: { accountId: { $in: req.query.accountId }, banned: false }})
 
         if (users) {
             for (let user of users) {
@@ -43,7 +43,7 @@ app.get("/account/api/public/account", async (req, res) => {
 });
 
 app.get("/account/api/public/account/displayName/:displayName", async (req, res) => {
-    let user = await User.findOne({ username_lower: req.params.displayName.toLowerCase(), banned: false }).lean();
+    let user = await User.findOne({where: { username_lower: req.params.displayName.toLowerCase(), banned: false }});
     if (!user) return error.createError(
         "errors.com.epicgames.account.account_not_found",
         `Sorry, we couldn't find an account for ${req.params.displayName}`, 
@@ -64,7 +64,7 @@ app.get("/persona/api/public/account/lookup", async (req, res) => {
         undefined, 1001, undefined, 400, res
     );
 
-    let user = await User.findOne({ username_lower: req.query.q.toLowerCase(), banned: false }).lean();
+    let user = await User.findOne({where: { username_lower: req.query.q.toLowerCase(), banned: false }});
     if (!user) return error.createError(
         "errors.com.epicgames.account.account_not_found",
         `Sorry, we couldn't find an account for ${req.query.q}`, 
@@ -87,7 +87,7 @@ app.get("/api/v1/search/:accountId", async (req, res) => {
         undefined, 1001, undefined, 400, res
     );
 
-    let users = await User.find({ username_lower: new RegExp(`^${req.query.prefix.toLowerCase()}`), banned: false }).lean();
+    let users = await User.find({where: { username_lower: new RegExp(`^${req.query.prefix.toLowerCase()}`), banned: false }});
 
     for (let user of users) {
         if (response.length >= 100) break;

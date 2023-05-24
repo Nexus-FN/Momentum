@@ -10,7 +10,7 @@
       "message": {
         "_type": "CommonUI Simple Message Base",
         "title": "Momentum",
-        "body": "Server created by Lawin and Zetax (Twitter: @lawin_010)\nSource: https://github.com/Nexus-FN/Momentum"
+        "body": "Server created by Zetax and !Kun0, source Lawin"
       }
     },
     "_activeDate": "2017-07-19T13:14:04.490Z",
@@ -1225,7 +1225,7 @@
           "hidden": false,
           "_type": "CommonUI Simple Message Base",
           "title": "Momentum",
-          "body": "Server created by Lawin and Zetax (Twitter: @lawin_010)\nSource: https://github.com/Nexus-FN/Momentum",
+          "body": "Server created by Zetax and !Kun0, source Lawin",
           "spotlight": true
         }
       ]
@@ -1250,7 +1250,7 @@
           "hidden": false,
           "_type": "CommonUI Emergency Notice Base",
           "title": "Momentum",
-          "body": "Server created by Lawin and Zetax (Twitter: @lawin_010)\nSource: https://github.com/Nexus-FN/Momentum"
+          "body": "Server created by Zetax and !Kun0, source Lawin"
         }
       ]
     },

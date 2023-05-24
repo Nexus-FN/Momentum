@@ -25,6 +25,7 @@ interface iEnv {
     USE_REDIS: Boolean | undefined;
     REDIS_TOKEN: string | undefined;
     REDIS_URL: string | undefined;
+    SQL_URI: string | undefined;
 }
 
 export class safety {
