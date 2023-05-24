@@ -116,7 +116,7 @@ app.post("/account/api/oauth/token", async (req: { headers: { [x: string]: strin
                     req.user = await User.findOne({where: { email: email.toLowerCase() }});
                 }
             } else {
-                req.user = await User.findOne({where: { email: email.toLowerCase() }}).lean();
+                req.user = await User.findOne({where: { email: email.toLowerCase() }})
             }
 
             let err = () => error.createError(
@@ -234,7 +234,7 @@ app.post("/account/api/oauth/token", async (req: { headers: { [x: string]: strin
                 return;
             }
 
-            req.user = await User.findOne({where: { accountId: object.accountId }}).lean();
+            req.user = await User.findOne({where: { accountId: object.accountId }})
             break;
 
         case "exchange_code":
@@ -257,7 +257,7 @@ app.post("/account/api/oauth/token", async (req: { headers: { [x: string]: strin
 
             global.exchangeCodes.splice(index, 1);
 
-            req.user = await User.findOne({where:{ accountId: exchange.accountId }}).lean();
+            req.user = await User.findOne({where:{ accountId: exchange.accountId }})
             break;
 
         default:
