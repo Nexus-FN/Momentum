@@ -6,8 +6,8 @@ import Asteria from "asteriasdk";
 
 const { SlashCommandBuilder } = require('discord.js');
 const functions = require('../../../structs/functions.js');
-const Users = require('../../../model/user');
-const Profiles = require('../../../model/profiles');
+const Users = require('../../../model/user-gres');
+const Profiles = require('../../../model/profiles-gres');
 
 const asteria = new Asteria({
     collectAnonStats: true,
@@ -37,8 +37,8 @@ module.exports = {
         const selectedUser = interaction.options.getUser('user');
         const selectedUserId: Number = selectedUser.id;
 
-        const user = await Users.findOne({ discordId: selectedUserId });
-        const profile = await Profiles.findOne({ accountId: user.accountId });
+        const user = await Users.findOne({where: { discordId: selectedUserId }});
+        const profile = await Profiles.findOne({where: { accountId: user.accountId }});
         if (!user) return interaction.reply({ content: "That user does not own an account", ephemeral: true });
 
         const cosmeticname: string = interaction.options.getString('cosmeticname');
@@ -58,28 +58,23 @@ module.exports = {
         } finally {
             if (profile.profiles.athena.items[`${cosmeticCheck.type.backendValue}:${cosmeticCheck.id}`]) return interaction.reply({ content: "That user already has that cosmetic", ephemeral: true });
         }
-
-        const updatedProfile = await Profiles.findOneAndUpdate(
-            { accountId: user.accountId },
-            {
-                $set: {
-                    [`profiles.athena.items.${cosmetic.type.backendValue}:${cosmetic.id}`]: {
-                        templateId: `${cosmetic.type.backendValue}:${cosmetic.id}`,
-                        attributes: {
-                            item_seen: false,
-                            variants: [],
-                            favorite: false,
-                        },
-                        "quantity": 1,
-                    },
+        
+        const toUpdateProfile = await Profiles.findOne({where: { accountId: user.accountId }}).then((toUpdateProfile) => {
+         const profiles = toUpdateProfile.profiles;
+         profiles.athena.items[`${cosmetic.type.backendValue}:${cosmetic.id}`] = {
+                templateId: `${cosmetic.type.backendValue}:${cosmetic.id}`,
+                attributes: {
+                    item_seen: false,
+                    variants: [],
+                    favorite: false,
                 },
-            },
-            { new: true },
-        )
-            .catch((err) => {
-                console.log(err)
-            })
+                "quantity": 1,
+            };
+        Profiles.update({ profiles: profiles }, { where: { accountId: user.accountId } });
 
+            
+        });
+        
         const embed = new EmbedBuilder()
             .setTitle("Cosmetic added")
             .setDescription("Successfully gave the user the cosmetic: " + cosmetic.name)

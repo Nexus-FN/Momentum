@@ -9,8 +9,8 @@ const app = express();
 import logger from "../structs/log.js";
 const functions = require("../structs/functions.js");
 
-const User = require("../model/user.js");
-const Friends = require("../model/friends.js");
+const User = require("../model/user-gres.js");
+const Friends = require("../model/friends-gres.js");
 
 const port = 80;
 const wss = new WebSocket({ server: app.listen(port) });
@@ -119,7 +119,7 @@ wss.on('connection', async (ws, req) => {
 
                 if (global.Clients.find(i => i.accountId == object.accountId)) return Error(ws);
 
-                let user = await User.findOne({ accountId: object.accountId, banned: false }).lean();
+                let user = await User.findOne({where: { accountId: object.accountId, banned: false }}).lean();
                 if (!user) return Error(ws);
 
                 if(user.isServer == true) {
@@ -460,7 +460,7 @@ function RemoveClient(ws, joinedMUCs) {
 }
 
 async function getPresenceFromFriends(ws, accountId, jid) {
-    let friends = await Friends.findOne({ accountId: accountId }).lean();
+    let friends = await Friends.findOne({where: { accountId: accountId }}).lean();
     if (!friends) return;
 
     let accepted = friends.list.accepted;
@@ -491,7 +491,7 @@ async function updatePresenceForFriends(ws, body, away, offline) {
     global.Clients[SenderIndex].lastPresenceUpdate.away = away;
     global.Clients[SenderIndex].lastPresenceUpdate.status = body;
 
-    let friends = await Friends.findOne({ accountId: SenderData.accountId });
+    let friends = await Friends.findOne({where: { accountId: SenderData.accountId }});
     let accepted = friends.list.accepted;
 
     accepted.forEach(friend => {

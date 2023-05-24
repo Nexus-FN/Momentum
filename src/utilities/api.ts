@@ -1,4 +1,4 @@
-const Api = require("../model/api.js");
+const Api = require("../model/api-gres.js");
 import path from "path";
 import kv from "./kv";
 const dotenv = require("dotenv");
@@ -14,7 +14,7 @@ async function verifyApikey(req, res, next) {
         return next();
     }
 
-    Api.findOne({ apikey: apikey }, (err, api) => {
+    Api.findOne({where: { apikey: apikey }}, (err, api) => {
         if (err) return res.status(500).json({ error: "Internal server error" });
         if (!api) return res.status(401).json({ error: "Invalid api key" });
 

@@ -5,7 +5,7 @@ export { }
 
 const { SlashCommandBuilder } = require('discord.js');
 const functions = require('../../../structs/functions.js');
-const Users = require('../../../model/user');
+const Users = require('../../../model/user-gres');
 const bcrypt = require('bcrypt');
 
 module.exports = {
@@ -19,7 +19,7 @@ module.exports = {
 
 
 	async execute(interaction) {
-        const user = await Users.findOne({ discordId: interaction.user.id });
+        const user = await Users.findOne({where: { discordId: interaction.user.id }});
         if (!user) return interaction.reply({ content: "You are not registered!", ephemeral: true });
 
 		const plainPassword = interaction.options.getString('password');
@@ -29,7 +29,9 @@ module.exports = {
 
         const hashedPassword:Hash = await bcrypt.hash(plainPassword, 10);
             
-        await user.updateOne({ $set: { password: hashedPassword } });
+		await user.update({
+			password: hashedPassword,
+		});
 
 		const embed = new EmbedBuilder()
 			.setTitle("Password changed")

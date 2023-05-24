@@ -5,7 +5,7 @@ export { }
 
 const { SlashCommandBuilder } = require('discord.js');
 const functions = require('../../../structs/functions.js');
-const Users = require('../../../model/user');
+const Users = require('../../../model/user-gres');
 const bcrypt = require('bcrypt');
 
 module.exports = {
@@ -19,7 +19,7 @@ module.exports = {
 
 
 	async execute(interaction) {
-        const user = await Users.findOne({ discordId: interaction.user.id });
+        const user = await Users.findOne({where: { discordId: interaction.user.id }});
         if (!user) return interaction.reply({ content: "You are not registered!", ephemeral: true });
 
 		let accessToken = global.accessTokens.find(i => i.accountId == user.accountId);
@@ -27,7 +27,9 @@ module.exports = {
 
 		const username = interaction.options.getString('username');
             
-        await user.updateOne({ $set: { username: username } });
+		await user.update({
+			username: username,
+		});
 
 		const embed = new EmbedBuilder()
 			.setTitle("Username changed")

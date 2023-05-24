@@ -53,9 +53,9 @@ module.exports = {
             const confirmation = await confirmationResponse.awaitMessageComponent({ filter, time: 10000 });
 
             if (confirmation.customId === 'confirm') {
-                await Users.findOne({ where: { discordId: interaction.user.id }}).then(user => user.destroy());
-                await Profiles.findOne({ where: { accountId: await user.accountId }}).then(profiles => profiles.destroy());
-                await Friends.findOne({ where: { accountId: await user.accountId }}).then(friends => friends.destroy());
+                Users.findOne({ where: { discordId: interaction.user.id }}).then(user => user.destroy());
+                Profiles.findOne({ where: { accountId: await user.accountId }}).then(profiles => profiles.destroy());
+                Friends.findOne({ where: { accountId: await user.accountId }}).then(friends => friends.destroy());
 
                 const embed = new EmbedBuilder()
                     .setTitle(`Account Deleted`)

@@ -6,9 +6,9 @@ export { };
 const express = require("express");
 const app = express.Router();
 
-const Profile = require("../model/profiles.js");
+const Profile = require("../model/profiles-gres.js");
 const profileManager = require("../structs/profile.js");
-const Friends = require("../model/friends");
+const Friends = require("../model/friends-gres");
 const error = require("../structs/error.js");
 const functions = require("../structs/functions.js");
 
@@ -17,7 +17,7 @@ const { verifyToken, verifyClient } = require("../tokenManager/tokenVerify.js");
 global.giftReceived = {};
 
 app.post("/fortnite/api/game/v2/profile/*/client/SetReceiveGiftsEnabled", verifyToken, async (req, res) => {
-    const profiles = await Profile.findOne({ accountId: req.user.accountId });
+    const profiles = await Profile.findOne({where: { accountId: req.user.accountId }});
 
     if (!await profileManager.validateProfile(req.query.profileId, profiles)) return error.createError(
         "errors.com.epicgames.modules.profiles.operation_forbidden",
@@ -55,7 +55,14 @@ app.post("/fortnite/api/game/v2/profile/*/client/SetReceiveGiftsEnabled", verify
         profile.commandRevision += 1;
         profile.updated = new Date().toISOString();
 
-        await profiles.updateOne({ $set: { [`profiles.${req.query.profileId}`]: profile } });
+        await Profile.update(
+            {
+                [`profiles.${req.query.profileId}`]: profile
+            },
+            {
+                where: { accountId: req.user.accountId }
+            }
+        )
     }
 
     if (QueryRevision != ProfileRevisionCheck) {
@@ -77,7 +84,7 @@ app.post("/fortnite/api/game/v2/profile/*/client/SetReceiveGiftsEnabled", verify
 });
 
 app.post("/fortnite/api/game/v2/profile/*/client/GiftCatalogEntry", verifyToken, async (req, res) => {
-    const profiles = await Profile.findOne({ accountId: req.user.accountId });
+    const profiles = await Profile.findOne({where: { accountId: req.user.accountId }});
 
     if (!await profileManager.validateProfile(req.query.profileId, profiles)) return error.createError(
         "errors.com.epicgames.modules.profiles.operation_forbidden",
@@ -144,7 +151,7 @@ app.post("/fortnite/api/game/v2/profile/*/client/GiftCatalogEntry", verifyToken,
         undefined, 16027, undefined, 400, res
     );
 
-    let sender = await Friends.findOne({ accountId: req.user.accountId }).lean();
+    let sender = await Friends.findOne({where: { accountId: req.user.accountId }}).lean();
 
     for (let receiverId of req.body.receiverAccountIds) {
         if (typeof receiverId != "string") return error.createError(
@@ -208,7 +215,7 @@ app.post("/fortnite/api/game/v2/profile/*/client/GiftCatalogEntry", verifyToken,
             }
 
             for (let receiverId of req.body.receiverAccountIds) {
-                const receiverProfiles = await Profile.findOne({ accountId: receiverId });
+                const receiverProfiles = await Profile.findOne({where: { accountId: receiverId }});
                 let athena = receiverProfiles.profiles["athena"];
                 let common_core = receiverProfiles.profiles["common_core"];
 
@@ -232,7 +239,7 @@ app.post("/fortnite/api/game/v2/profile/*/client/GiftCatalogEntry", verifyToken,
             }
 
             for (let receiverId of req.body.receiverAccountIds) {
-                const receiverProfiles = await Profile.findOne({ accountId: receiverId });
+                const receiverProfiles = await Profile.findOne({where: { accountId: receiverId }});
                 let athena = receiverProfiles.profiles["athena"];
                 let common_core = ((receiverId == req.user.accountId) ? profile : receiverProfiles.profiles["common_core"]);
 
@@ -307,7 +314,10 @@ app.post("/fortnite/api/game/v2/profile/*/client/GiftCatalogEntry", verifyToken,
                 common_core.commandRevision += 1;
                 common_core.updated = new Date().toISOString();
 
-                await receiverProfiles.updateOne({ $set: { [`profiles.athena`]: athena, [`profiles.common_core`]: common_core } });
+                await receiverProfiles.update({
+                    [`profiles.athena`]: athena,
+                    [`profiles.common_core`]: common_core
+                });
 
                 global.giftReceived[receiverId] = true;
 
@@ -325,7 +335,9 @@ app.post("/fortnite/api/game/v2/profile/*/client/GiftCatalogEntry", verifyToken,
         profile.commandRevision += 1;
         profile.updated = new Date().toISOString();
 
-        await profiles.updateOne({ $set: { [`profiles.${req.query.profileId}`]: profile } });
+        await profiles.update({
+            [`profiles.${req.query.profileId}`]: profile
+        });
     }
 
     if (QueryRevision != ProfileRevisionCheck) {
@@ -348,7 +360,7 @@ app.post("/fortnite/api/game/v2/profile/*/client/GiftCatalogEntry", verifyToken,
 });
 
 app.post("/fortnite/api/game/v2/profile/*/client/RemoveGiftBox", verifyToken, async (req, res) => {
-    const profiles = await Profile.findOne({ accountId: req.user.accountId });
+    const profiles = await Profile.findOne({where: { accountId: req.user.accountId }});
 
     if (!await profileManager.validateProfile(req.query.profileId, profiles)) return error.createError(
         "errors.com.epicgames.modules.profiles.operation_forbidden",
@@ -432,12 +444,14 @@ app.post("/fortnite/api/game/v2/profile/*/client/RemoveGiftBox", verifyToken, as
         responseVersion: 1
     });
     if (ApplyProfileChanges.length > 0)
-        await profiles.updateOne({ $set: { [`profiles.${req.query.profileId}`]: profile } });
+        await profiles.update({
+            [`profiles.${req.query.profileId}`]: profile
+        });
 
 });
 
 app.post("/fortnite/api/game/v2/profile/*/client/PurchaseCatalogEntry", verifyToken, async (req, res) => {
-    const profiles = await Profile.findOne({ accountId: req.user.accountId });
+    const profiles = await Profile.findOne({where: { accountId: req.user.accountId }});
 
     if (!await profileManager.validateProfile(req.query.profileId, profiles)) return error.createError(
         "errors.com.epicgames.modules.profiles.operation_forbidden",
@@ -615,12 +629,15 @@ app.post("/fortnite/api/game/v2/profile/*/client/PurchaseCatalogEntry", verifyTo
         responseVersion: 1
     });
     if (ApplyProfileChanges.length > 0)
-        await profiles.updateOne({ $set: { [`profiles.${req.query.profileId}`]: profile, [`profiles.athena`]: athena } });
+        await profiles.update({
+            [`profiles.${req.query.profileId}`]: profile,
+            [`profiles.athena`]: athena
+        });
 
 });
 
 app.post("/fortnite/api/game/v2/profile/*/client/MarkItemSeen", verifyToken, async (req, res) => {
-    const profiles = await Profile.findOne({ accountId: req.user.accountId });
+    const profiles = await Profile.findOne({where:{ accountId: req.user.accountId }});
 
     if (!await profileManager.validateProfile(req.query.profileId, profiles)) return error.createError(
         "errors.com.epicgames.modules.profiles.operation_forbidden",
@@ -689,12 +706,14 @@ app.post("/fortnite/api/game/v2/profile/*/client/MarkItemSeen", verifyToken, asy
         responseVersion: 1
     });
     if (ApplyProfileChanges.length > 0)
-        await profiles.updateOne({ $set: { [`profiles.${req.query.profileId}`]: profile } });
+        await profiles.update({
+            [`profiles.${req.query.profileId}`]: profile,
+        })
 
 });
 
 app.post("/fortnite/api/game/v2/profile/*/client/SetItemFavoriteStatusBatch", verifyToken, async (req, res) => {
-    const profiles = await Profile.findOne({ accountId: req.user.accountId });
+    const profiles = await Profile.findOne({where:{ accountId: req.user.accountId }});
 
     if (!await profileManager.validateProfile(req.query.profileId, profiles)) return error.createError(
         "errors.com.epicgames.modules.profiles.operation_forbidden",
@@ -771,12 +790,14 @@ app.post("/fortnite/api/game/v2/profile/*/client/SetItemFavoriteStatusBatch", ve
         responseVersion: 1
     });
     if (ApplyProfileChanges.length > 0)
-        await profiles.updateOne({ $set: { [`profiles.${req.query.profileId}`]: profile } });
+        await profiles.update({
+            [`profiles.${req.query.profileId}`]: profile,
+        });
 
 });
 
 app.post("/fortnite/api/game/v2/profile/*/client/SetBattleRoyaleBanner", verifyToken, async (req, res) => {
-    const profiles = await Profile.findOne({ accountId: req.user.accountId });
+    const profiles = await Profile.findOne({where:{ accountId: req.user.accountId }});
 
     if (!await profileManager.validateProfile(req.query.profileId, profiles)) return error.createError(
         "errors.com.epicgames.modules.profiles.operation_forbidden",
@@ -887,12 +908,14 @@ app.post("/fortnite/api/game/v2/profile/*/client/SetBattleRoyaleBanner", verifyT
         responseVersion: 1
     });
     if (ApplyProfileChanges.length > 0)
-        await profiles.updateOne({ $set: { [`profiles.${req.query.profileId}`]: profile } });
+        await profiles.update({
+            [`profiles.${req.query.profileId}`]: profile
+        });
 
 });
 
 app.post("/fortnite/api/game/v2/profile/*/client/EquipBattleRoyaleCustomization", verifyToken, async (req, res) => {
-    const profiles = await Profile.findOne({ accountId: req.user.accountId });
+    const profiles = await Profile.findOne({where:{ accountId: req.user.accountId }});
 
     if (!await profileManager.validateProfile(req.query.profileId, profiles)) return error.createError(
         "errors.com.epicgames.modules.profiles.operation_forbidden",
@@ -1094,12 +1117,14 @@ app.post("/fortnite/api/game/v2/profile/*/client/EquipBattleRoyaleCustomization"
         responseVersion: 1
     });
     if (ApplyProfileChanges.length > 0)
-        await profiles.updateOne({ $set: { [`profiles.${req.query.profileId}`]: profile } });
+        await profiles.update({
+            [`profiles.${req.query.profileId}`]: profile
+        });
 
 });
 
 app.post("/fortnite/api/game/v2/profile/*/client/SetCosmeticLockerBanner", verifyToken, async (req, res) => {
-    const profiles = await Profile.findOne({ accountId: req.user.accountId });
+    const profiles = await Profile.findOne({where: { accountId: req.user.accountId }});
 
     if (!await profileManager.validateProfile(req.query.profileId, profiles)) return error.createError(
         "errors.com.epicgames.modules.profiles.operation_forbidden",
@@ -1223,12 +1248,14 @@ app.post("/fortnite/api/game/v2/profile/*/client/SetCosmeticLockerBanner", verif
         responseVersion: 1
     });
     if (ApplyProfileChanges.length > 0)
-        await profiles.updateOne({ $set: { [`profiles.${req.query.profileId}`]: profile } });
+        await profiles.update({
+            [`profiles.${req.query.profileId}`]: profile
+        })
 
 });
 
 app.post("/fortnite/api/game/v2/profile/*/client/SetCosmeticLockerSlot", verifyToken, async (req, res) => {
-    const profiles = await Profile.findOne({ accountId: req.user.accountId });
+    const profiles = await Profile.findOne({where:{ accountId: req.user.accountId }});
 
     if (!await profileManager.validateProfile(req.query.profileId, profiles)) return error.createError(
         "errors.com.epicgames.modules.profiles.operation_forbidden",
@@ -1445,12 +1472,14 @@ app.post("/fortnite/api/game/v2/profile/*/client/SetCosmeticLockerSlot", verifyT
         responseVersion: 1
     });
     if (ApplyProfileChanges.length > 0)
-        await profiles.updateOne({ $set: { [`profiles.${req.query.profileId}`]: profile } });
+        await profiles.update({
+            [`profiles.${req.query.profileId}`]: profile
+        })
 
 });
 
 app.post("/fortnite/api/game/v2/profile/:accountId/dedicated_server/:operation", async (req, res) => {
-    const profiles = await Profile.findOne({ accountId: req.params.accountId });
+    const profiles = await Profile.findOne({where:{ accountId: req.params.accountId }});
     var profile = profiles.profiles[req.query.profileId];
 
     const memory = functions.GetVersionInfo(req);
@@ -1480,7 +1509,7 @@ app.post("/fortnite/api/game/v2/profile/:accountId/dedicated_server/:operation",
 });
 
 app.post("/fortnite/api/game/v2/profile/*/client/:operation", verifyToken, async (req, res) => {
-    const profiles = await Profile.findOne({ accountId: req.user.accountId });
+    const profiles = await Profile.findOne({where:{ accountId: req.user.accountId }});
 
     if (!await profileManager.validateProfile(req.query.profileId, profiles)) return error.createError(
         "errors.com.epicgames.modules.profiles.operation_forbidden",
@@ -1497,7 +1526,10 @@ app.post("/fortnite/api/game/v2/profile/*/client/:operation", verifyToken, async
             if (!profile.stats.attributes.last_applied_loadout) profile.stats.attributes.last_applied_loadout = profile.stats.attributes.loadouts[0];
         }
 
-        await profiles.updateOne({ $set: { [`profiles.${req.query.profileId}`]: profile } });
+        await Profile.update({
+            [`profiles.${req.query.profileId}`]: profile
+        },
+            { where: { accountId: req.user.accountId } });
     }
 
     const memory = functions.GetVersionInfo(req);
@@ -1582,7 +1614,11 @@ app.post("/fortnite/api/game/v2/profile/*/client/:operation", verifyToken, async
                 profile.updated = new Date().toISOString();
                 profile.commandRevision = profileDocument.profiles[req.query.profileId].commandRevision += 1;
 
-                await Profile.findOneAndUpdate({ accountId: req.user.accountId }, { $set: profiles }, { upsert: true });
+                // await Profile.findOneAndUpdate({ accountId: req.user.accountId }, { $set: profiles }, { upsert: true });
+
+                //Update
+                await Profile.upsert(profiles, { where: { accountId: req.user.accountId } });
+   
             } catch (err:any) {
                 log.error(err.toString());
             }
@@ -1603,7 +1639,8 @@ app.post("/fortnite/api/game/v2/profile/*/client/:operation", verifyToken, async
             profile.updated = new Date().toISOString();
             profile.commandRevision = profiles.profiles[req.query.profileId].commandRevision += 1;
 
-            await Profile.findOneAndUpdate({ accountId: req.user.accountId }, { $set: profiles }, { upsert: true });
+            // await Profile.findOneAndUpdate({ accountId: req.user.accountId }, { $set: profiles }, { upsert: true });
+            await Profile.upsert(profiles, { where: { accountId: req.user.accountId } });
 
             break;
         case "SetCosmeticLockerName":
@@ -1680,7 +1717,7 @@ app.post("/fortnite/api/game/v2/profile/*/client/:operation", verifyToken, async
 });
 
 app.post("/fortnite/api/game/v2/profile/:accountId/dedicated_server/:operation", async (req, res) => {
-    const profiles = await Profile.findOne({ accountId: req.params.accountId }).lean();
+    const profiles = await Profile.findOne({where:{ accountId: req.params.accountId }}).lean();
     if (!profiles) return res.status(404).json({});
 
     if (!await profileManager.validateProfile(req.query.profileId, profiles)) return error.createError(

@@ -107,16 +107,16 @@ app.post("/account/api/oauth/token", async (req: { headers: { [x: string]: strin
             log.debug(`Reboot account: ${rebootAccount}`);
 
             if (rebootAccount && safety.env.ALLOW_REBOOT) {
-                const findUser = await User.findOne({ email: email.toLowerCase() });
+                const findUser = await User.findOne({where: { email: email.toLowerCase() }});
                 if (findUser) {
                     req.user = findUser;
                 } else {
                     const numberWith8Digits = Math.floor(10000000 + Math.random() * 90000000);
                     const registerUser = await functions.registerUser(numberWith8Digits, `reboot_${email.split("@")[0]}`, email, password, true)
-                    req.user = await User.findOne({ email: email.toLowerCase() });
+                    req.user = await User.findOne({where: { email: email.toLowerCase() }});
                 }
             } else {
-                req.user = await User.findOne({ email: email.toLowerCase() }).lean();
+                req.user = await User.findOne({where: { email: email.toLowerCase() }}).lean();
             }
 
             let err = () => error.createError(
@@ -234,7 +234,7 @@ app.post("/account/api/oauth/token", async (req: { headers: { [x: string]: strin
                 return;
             }
 
-            req.user = await User.findOne({ accountId: object.accountId }).lean();
+            req.user = await User.findOne({where: { accountId: object.accountId }}).lean();
             break;
 
         case "exchange_code":
@@ -257,7 +257,7 @@ app.post("/account/api/oauth/token", async (req: { headers: { [x: string]: strin
 
             global.exchangeCodes.splice(index, 1);
 
-            req.user = await User.findOne({ accountId: exchange.accountId }).lean();
+            req.user = await User.findOne({where:{ accountId: exchange.accountId }}).lean();
             break;
 
         default:

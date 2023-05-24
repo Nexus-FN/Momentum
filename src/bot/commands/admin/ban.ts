@@ -1,8 +1,8 @@
 export { }
 
 import { EmbedBuilder, PermissionFlagsBits } from "discord.js";
-const Users = require('../../../model/user');
-const Profiles = require('../../../model/profiles');
+const Users = require('../../../model/user-gres');
+const Profiles = require('../../../model/profiles-gres');
 
 const { SlashCommandBuilder } = require('discord.js');
 const functions = require('../../../structs/functions.js');
@@ -28,28 +28,32 @@ module.exports = {
 
         let msg:string = "";
         const reason:string = interaction.options.getString('reason');
+        const selectedUser = interaction.options.getUser('user');
 
-        const targetUser = await Users.findOne({ username_lower: interaction.options.getUser('user').username.toLowerCase() });
-
-        if (!targetUser) msg = "The account username you entered does not exist.";
-        else if (targetUser.banned == true) msg = "This account is already banned.";
-
-        if (targetUser && targetUser.banned !== true) {
-            await targetUser.updateOne({ $set: { banned: true } });
-
-            let refreshToken = global.refreshTokens.findIndex(i => i.accountId == targetUser.accountId);
-            if (refreshToken != -1) global.refreshTokens.splice(refreshToken, 1);
+        const targetUser = await Users.findOne({where: { discordId: selectedUser.id}}).then(async (user) => {
+            if (!user) msg = "The account username you entered does not exist.";
+            else if (user.banned == true) msg = "This account is already banned.";
     
-            let accessToken = global.accessTokens.findIndex(i => i.accountId == targetUser.accountId);
-            if (accessToken != -1) {
-                global.accessTokens.splice(accessToken, 1);
+            if (user && user.banned !== true) {
+                console.log("Banning account " + user.username);
+                await Users.update({banned: true}, {where: {discordId: selectedUser.id}});
     
-                let xmppClient = global.Clients.find(client => client.accountId == targetUser.accountId);
-                if (xmppClient) xmppClient.client.close();
+                let refreshToken = global.refreshTokens.findIndex(i => i.accountId == user.accountId);
+                if (refreshToken != -1) global.refreshTokens.splice(refreshToken, 1);
+        
+                let accessToken = global.accessTokens.findIndex(i => i.accountId == user.accountId);
+                if (accessToken != -1) {
+                    global.accessTokens.splice(accessToken, 1);
+        
+                    let xmppClient = global.Clients.find(client => client.accountId == user.accountId);
+                    if (xmppClient) xmppClient.client.close();
+                }
+        
+                if (accessToken != -1 || refreshToken != -1) functions.UpdateTokens();
             }
     
-            if (accessToken != -1 || refreshToken != -1) functions.UpdateTokens();
-        }
+        });
+
 
         const embed = new EmbedBuilder()
             .setTitle("Account banned")
