@@ -24,7 +24,7 @@ app.get("/friends/api/public/list/fortnite/*/recentPlayers", (req, res) => {
 
 app.get("/friends/api/public/friends/:accountId", verifyToken, async (req, res) => {
     let response:Object[] = [];
-
+    console.log("Update 1");
     const friends = await Friends.findOne({ where:{ accountId: req.user.accountId }});
 
     friends.list.accepted.forEach(acceptedFriend => {
@@ -61,6 +61,7 @@ app.get("/friends/api/public/friends/:accountId", verifyToken, async (req, res) 
 });
 
 app.post("/friends/api/*/friends*/:receiverId", verifyToken, async (req, res) => {
+    console.log("Update 2");
     let sender = await Friends.findOne({ where: { accountId: req.user.accountId }});
     let receiver = await Friends.findOne({where: { accountId: req.params.receiverId }});
     if (!sender || !receiver) return res.status(403).end();
@@ -78,6 +79,7 @@ app.post("/friends/api/*/friends*/:receiverId", verifyToken, async (req, res) =>
 });
 
 app.delete("/friends/api/*/friends*/:receiverId", verifyToken, async (req, res) => {
+    console.log("Update 3");
     let sender = await Friends.findOne({ where: { accountId: req.user.accountId }});
     let receiver = await Friends.findOne({ where: { accountId: req.params.receiverId }});
     if (!sender || !receiver) return res.status(403).end();
@@ -91,6 +93,7 @@ app.delete("/friends/api/*/friends*/:receiverId", verifyToken, async (req, res) 
 });
 
 app.post("/friends/api/*/blocklist*/:receiverId", verifyToken, async (req, res) => {
+    console.log("Update 4");
     let sender = await Friends.findOne({ where: { accountId: req.user.accountId }});
     let receiver = await Friends.findOne({ where: { accountId: req.params.receiverId }});
     if (!sender || !receiver) return res.status(403).end();
@@ -104,6 +107,7 @@ app.post("/friends/api/*/blocklist*/:receiverId", verifyToken, async (req, res) 
 });
 
 app.delete("/friends/api/*/blocklist*/:receiverId", verifyToken, async (req, res) => {
+    console.log("Update 5");
     let sender = await Friends.findOne({ where: { accountId: req.user.accountId }});
     let receiver = await Friends.findOne({ where: { accountId: req.params.receiverId }});
     if (!sender || !receiver) return res.status(403).end();
@@ -124,7 +128,7 @@ app.get("/friends/api/v1/:accountId/summary", verifyToken, async (req, res) => {
             "acceptInvites": "public"
         }
     }
-
+    console.log("Update 6");
     const friends = await Friends.findOne({ where: { accountId: req.user.accountId }});
 
     friends.list.accepted.forEach(acceptedFriend => {
@@ -165,6 +169,7 @@ app.get("/friends/api/v1/:accountId/summary", verifyToken, async (req, res) => {
 });
 
 app.get("/friends/api/public/blocklist/*", verifyToken, async (req, res) => {
+    console.log("Update 7");
     let friends = await Friends.findOne({ where: { accountId: req.user.accountId }});
 
     res.json({

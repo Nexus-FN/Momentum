@@ -1528,7 +1528,6 @@ app.post("/fortnite/api/game/v2/profile/*/client/:operation", verifyToken, async
     );
 
     let profile = profiles.profiles[req.query.profileId];
-    console.log(profile);
 
     if (profile.rvn == profile.commandRevision) {
         profile.rvn += 1;

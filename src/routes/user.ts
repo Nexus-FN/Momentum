@@ -24,7 +24,7 @@ app.get("/account/api/public/account", async (req, res) => {
     }
 
     if (Array.isArray(req.query.accountId)) {
-        let users = await User.find({where: { accountId: { $in: req.query.accountId }, banned: false }})
+        let users = await User.findOne({where: { accountId: { $in: req.query.accountId }, banned: false }})
 
         if (users) {
             for (let user of users) {

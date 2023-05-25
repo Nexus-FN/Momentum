@@ -1,5 +1,4 @@
-export { };
-
+const { DataTypes, Model, Sequelize } = require('sequelize');
 
 const express = require("express");
 const app = express();
@@ -11,7 +10,7 @@ import logger from './structs/log';
 const rateLimit = require("express-rate-limit");
 const jwt = require("jsonwebtoken");
 const error = require("./structs/error.js");
-const functions = require("./structs/functions.js");
+
 const dotenv = require("dotenv");
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') })
 
@@ -20,11 +19,16 @@ import log from './structs/log';
 import safety from './utilities/safety';
 import update from './utilities/update';
 import process from 'node:process';
-import { DataTypes, Model, Sequelize } from 'sequelize';
+
 
 const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, "../package.json")).toString());
-const sequelize = new Sequelize('postgres://server:Munano123@localhost:5432/fortniteserver');
+const sequelize = new Sequelize(safety.env.SQL_URI, {
+    logging: false,
+});
 export default sequelize;
+
+// This contains models so require after initializing sequelize
+const functions = require("./structs/functions.js");
 
 process.once('SIGTERM', async function (code) {
     console.log('SIGTERM received...');
@@ -96,7 +100,8 @@ async function main() {
     global.exchangeCodes = [];
     // Connect sequelize to postgres
     const sequelize = new Sequelize('postgres://server:Munano123@localhost:5432/fortniteserver');
-
+    
+    
     mongoose.set("strictQuery", true);
 
 

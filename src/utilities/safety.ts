@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 interface iEnv {
+    SQL_URI: string | undefined;
     MONGO_URI: string | undefined;
     BOT_TOKEN: string | undefined;
     CLIENT_ID: string | undefined;
@@ -25,7 +26,6 @@ interface iEnv {
     USE_REDIS: Boolean | undefined;
     REDIS_TOKEN: string | undefined;
     REDIS_URL: string | undefined;
-    SQL_URI: string | undefined;
 }
 
 export class safety {
@@ -49,6 +49,7 @@ export class safety {
     }
 
     public env: iEnv = {
+        SQL_URI: process.env.SQL_URI,
         MONGO_URI: process.env.MONGO_URI,
         BOT_TOKEN: process.env.BOT_TOKEN,
         CLIENT_ID: process.env.CLIENT_ID,

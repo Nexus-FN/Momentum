@@ -1,6 +1,6 @@
 import { DataTypes, Model, Sequelize } from 'sequelize';
 import faker from 'faker';
-const sequelize = new Sequelize('postgres://server:Munano123@10.0.30.55:5432/fortniteserver');
+import sequelize from '../index';
 
 const User = sequelize.define('User', {
     created: { type: DataTypes.DATE, allowNull: false },

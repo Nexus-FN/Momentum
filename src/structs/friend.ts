@@ -72,7 +72,7 @@ async function sendFriendReq(fromId, toId) {
         "type": "com.epicgames.friends.core.apiobjects.Friend",
         "timestamp": new Date().toISOString()
     }, to.accountId);
-    console.log("fromFriends: " + fromFriends + " toFriends: " + toFriends);
+    console.log("Update 3");
 
     await Friends.update({
         list: fromFriends,
@@ -133,7 +133,7 @@ async function acceptFriendReq(fromId, toId) {
             "type": "com.epicgames.friends.core.apiobjects.Friend",
             "timestamp": new Date().toISOString()
         }, to.accountId);
-
+        console.log("Update 4");
         await Friends.update({
             list: fromFriends,
         }, {
@@ -197,7 +197,7 @@ async function deleteFriend(fromId, toId) {
             "type": "com.epicgames.friends.core.apiobjects.FriendRemoval",
             "timestamp": new Date().toISOString()
         }, to.accountId);
-
+        console.log("update1");
         await Friends.update({
             list: fromFriends,
         }, {
@@ -228,7 +228,7 @@ async function blockFriend(fromId, toId) {
     let to = await Friends.findOne({where: { accountId: toId }});
     
     fromFriends.blocked.push({ accountId: to.accountId, created: new Date().toISOString() });
-
+    console.log("update2");
     await from.Update({list: fromFriends}, {where: { accountId: fromId }})
 
     return true;

@@ -1,5 +1,5 @@
 import { DataTypes, Model, Sequelize } from 'sequelize';
-const sequelize = new Sequelize('postgres://server:Munano123@localhost:5432/fortniteserver');
+import sequelize from '../index';
 
 const ApiSchema = sequelize.define('api', {
     created: { type: DataTypes.DATE, allowNull: false },

@@ -1,7 +1,7 @@
 import { DataTypes, Model, Sequelize } from 'sequelize';
 
 
-const sequelize = new Sequelize('postgres://server:Munano123@10.0.30.55:5432/fortniteserver');
+import sequelize from '../index';
 
 const Profiles = sequelize.define('profiles', {
     created: { type: DataTypes.DATE, allowNull: false },
