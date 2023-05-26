@@ -119,7 +119,7 @@ wss.on('connection', async (ws, req) => {
 
                 if (global.Clients.find(i => i.accountId == object.accountId)) return Error(ws);
 
-                let user = await User.findOne({where: { accountId: object.accountId, banned: false }}).lean();
+                let user = await User.findOne({where: { accountId: object.accountId, banned: false }});
                 if (!user) return Error(ws);
 
                 if(user.isServer == true) {
@@ -460,7 +460,7 @@ function RemoveClient(ws, joinedMUCs) {
 }
 
 async function getPresenceFromFriends(ws, accountId, jid) {
-    let friends = await Friends.findOne({where: { accountId: accountId }}).lean();
+    let friends = await Friends.findOne({where: { accountId: accountId }});
     if (!friends) return;
 
     let accepted = friends.list.accepted;
