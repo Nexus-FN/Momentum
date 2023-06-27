@@ -8,7 +8,7 @@
     "@heyputer/kv.js": "^0.1.3",
     "@upstash/redis": "^1.21.0",
     "asteriasdk": "^1.0.1",
-    "aws-sdk": "^2.1386.0",
+    "aws-sdk": "^2.1406.0",
     "bcrypt": "^5.1.0",
     "cookie-parser": "^1.4.6",
     "discord.js": "^14.9.0",
