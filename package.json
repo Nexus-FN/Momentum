@@ -4,7 +4,7 @@
   "description": "Momentum is a fortnite backend that features an account system and xmpp.",
   "main": "index.js",
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.341.0",
+    "@aws-sdk/client-s3": "^3.367.0",
     "@napi-rs/canvas": "^0.1.41",
     "@upstash/redis": "^1.21.0",
     "asteriasdk": "^1.0.1",
