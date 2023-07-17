@@ -22,7 +22,7 @@
     "express-limit": "^1.0.0",
     "express-rate-limit": "^6.7.0",
     "filter-console": "^1.0.0",
-    "hyper-express": "^6.7.1",
+    "hyper-express": "^6.8.0",
     "ini": "^4.1.1",
     "ioredis": "^5.3.2",
     "jsonwebtoken": "^9.0.0",
