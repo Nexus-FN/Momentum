@@ -1129,6 +1129,14 @@ app.post("/fortnite/api/game/v2/profile/*/client/PurchaseCatalogEntry", verifyTo
                     "quantity": 1
                 };
 
+                if(process.env.VARIANTS) { //variant
+                    let variantsFile = JSON.parse(fs.readFileSync(path.join(__dirname, "../../responses/", "variants.json"), "utf8"));
+                    let variantToAdd = variantsFile.find(i => i.id.toLowerCase() == profile.items[req.body.itemToSlot].templateId.toLowerCase()).variants;
+                    if (variantToAdd) {
+                        Item.attributes.variants = variantToAdd;
+                    }
+                }
+
                 athena.items[ID] = Item;
 
                 MultiUpdate[0].profileChanges.push({
@@ -1574,6 +1582,14 @@ app.post("/fortnite/api/game/v2/profile/*/client/EquipBattleRoyaleCustomization"
         );
 
         let Variants = req.body.variantUpdates;
+
+        if(!process.env.VARIANTS) { //variant
+            let variantsFile = JSON.parse(fs.readFileSync(path.join(__dirname, "../../responses/", "variants.json"), "utf8"));
+            let variantToAdd = variantsFile.find(i => i.id.toLowerCase() == profile.items[req.body.itemToSlot].templateId.toLowerCase()).variants;
+            if (variantToAdd) {
+                profile.items[req.body.itemToSlot].attributes.variants = variantToAdd;
+            }
+        }
 
         if (Array.isArray(Variants)) {
             for (let i in Variants) {
