@@ -11,6 +11,10 @@ import functions from "../utilities/structs/functions.js";
 import log from "../utilities/structs/log.js";
 import error from "../utilities/structs/error.js";
 import { verifyToken } from "../tokenManager/tokenVerify.js";
+import fs, { stat } from "fs";
+import path from "path";
+import { dirname } from 'dirname-filename-esm';
+const __dirname = dirname(import.meta);
 
 global.giftReceived = {}; +
 
@@ -517,6 +521,7 @@ app.post("/fortnite/api/game/v2/profile/*/client/PurchaseCatalogEntry", verifyTo
 
     if (!profile.items) profile.items = {};
     if (!athena.items) athena.items = {};
+    let ItemExists = false;
 
     let findOfferId = functions.getOfferID(req.body.offerId);
     if (!findOfferId) return error.createError(
@@ -524,6 +529,575 @@ app.post("/fortnite/api/game/v2/profile/*/client/PurchaseCatalogEntry", verifyTo
         `Offer ID (id: '${req.body.offerId}') not found`,
         [req.body.offerId], 16027, undefined, 400, res
     );
+
+    if (memory.season == Number(process.env.MAIN_SEASON)) {
+        var season = `Season${process.env.MAIN_SEASON}`;
+        let BattlePass = JSON.parse(fs.readFileSync(path.join(__dirname, "../../responses/BattlePass/", `${season}.json`), "utf8"));
+
+        if(!BattlePass) return error.createError(
+            "errors.com.epicgames.fortnite.id_invalid",
+            `No Battle Pass for this season.`,
+            [req.body.offerId], 16027, undefined, 400, res
+        );
+
+        if (req.body.offerId == BattlePass.battlePassOfferId || req.body.offerId == BattlePass.battleBundleOfferId || req.body.offerId == BattlePass.tierOfferId) {
+            let offerId = req.body.offerId;
+
+            if (findOfferId.offerId.prices[0].currencyType.toLowerCase() == "mtxcurrency") {
+                let paid = false;
+
+                for (let key in profile.items) {
+                    if (!profile.items[key].templateId.toLowerCase().startsWith("currency:mtx")) continue;
+
+                    let currencyPlatform = profile.items[key].attributes.platform;
+                    if ((currencyPlatform.toLowerCase() != profile.stats.attributes.current_mtx_platform.toLowerCase()) && (currencyPlatform.toLowerCase() != "shared")) continue;
+
+                    if (profile.items[key].quantity < findOfferId.offerId.prices[0].finalPrice) return error.createError(
+                        "errors.com.epicgames.currency.mtx.insufficient",
+                        `You can not afford this item (${findOfferId.offerId.prices[0].finalPrice}), you only have ${profile.items[key].quantity}.`,
+                        [`${findOfferId.offerId.prices[0].finalPrice}`, `${profile.items[key].quantity}`], 1040, undefined, 400, res
+                    );
+
+                    profile.items[key].quantity -= findOfferId.offerId.prices[0].finalPrice;
+
+                    ApplyProfileChanges.push({
+                        "changeType": "itemQuantityChanged",
+                        "itemId": key,
+                        "quantity": profile.items[key].quantity
+                    });
+
+                    paid = true;
+
+                    break;
+                }
+
+                if (!paid && findOfferId.offerId.prices[0].finalPrice > 0) return error.createError(
+                    "errors.com.epicgames.currency.mtx.insufficient",
+                    `You can not afford this item (${findOfferId.offerId.prices[0].finalPrice}).`,
+                    [`${findOfferId.offerId.prices[0].finalPrice}`], 1040, undefined, 400, res
+                );
+            }
+
+            if (BattlePass.battlePassOfferId == offerId || BattlePass.battleBundleOfferId == offerId) {
+                var lootList: any[] = [];
+                var EndingTier = athena.stats.attributes.book_level;
+                athena.stats.attributes.book_purchased = true;
+
+                if (BattlePass.battleBundleOfferId == offerId) {
+                    athena.stats.attributes.book_level += 25;
+                    if (athena.stats.attributes.book_level > 100) athena.stats.attributes.book_level = 100;
+                    EndingTier = athena.stats.attributes.book_level;
+                }
+
+                for (var i = 0; i < EndingTier; i++) {
+                    var FreeTier = BattlePass.freeRewards[i] || {};
+                    var PaidTier = BattlePass.paidRewards[i] || {};
+
+                    for (var item in FreeTier) {
+                        if (item.toLowerCase() == "token:athenaseasonxpboost") {
+                            athena.stats.attributes.season_match_boost += FreeTier[item];
+
+                            MultiUpdate[0].profileChanges.push({
+                                "changeType": "statModified",
+                                "name": "season_match_boost",
+                                "value": athena.stats.attributes.season_match_boost
+                            })
+                        }
+
+                        if (item.toLowerCase() == "token:athenaseasonfriendxpboost") {
+                            athena.stats.attributes.season_friend_match_boost += FreeTier[item];
+
+                            MultiUpdate[0].profileChanges.push({
+                                "changeType": "statModified",
+                                "name": "season_friend_match_boost",
+                                "value": athena.stats.attributes.season_friend_match_boost
+                            })
+                        }
+
+                        if (item.toLowerCase().startsWith("currency:mtx")) {
+                            for (var key in profile.items) {
+                                if (profile.items[key].templateId.toLowerCase().startsWith("currency:mtx")) {
+                                    if (profile.items[key].attributes.platform.toLowerCase() == profile.stats.attributes.current_mtx_platform.toLowerCase() || profile.items[key].attributes.platform.toLowerCase() == "shared") {
+                                        profile.items[key].attributes.quantity += FreeTier[item];
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
+                        if (item.toLowerCase().startsWith("homebasebanner")) {
+                            for (var key in profile.items) {
+                                if (profile.items[key].templateId.toLowerCase() == item.toLowerCase()) {
+                                    profile.items[key].attributes.item_seen = false;
+                                    ItemExists = true;
+
+                                    ApplyProfileChanges.push({
+                                        "changeType": "itemAttrChanged",
+                                        "itemId": key,
+                                        "attributeName": "item_seen",
+                                        "attributeValue": profile.items[key].attributes.item_seen
+                                    })
+                                }
+                            }
+
+                            if (ItemExists == false) {
+                                var ItemID = functions.MakeID();
+                                var Item = { "templateId": item, "attributes": { "item_seen": false }, "quantity": 1 };
+
+                                profile.items[ItemID] = Item;
+
+                                ApplyProfileChanges.push({
+                                    "changeType": "itemAdded",
+                                    "itemId": ItemID,
+                                    "item": Item
+                                })
+                            }
+
+                            ItemExists = false;
+                        }
+
+                        if (item.toLowerCase().startsWith("athena")) {
+                            for (var key in athena.items) {
+                                if (athena.items[key].templateId.toLowerCase() == item.toLowerCase()) {
+                                    athena.items[key].attributes.item_seen = false;
+                                    ItemExists = true;
+
+                                    MultiUpdate[0].profileChanges.push({
+                                        "changeType": "itemAttrChanged",
+                                        "itemId": key,
+                                        "attributeName": "item_seen",
+                                        "attributeValue": athena.items[key].attributes.item_seen
+                                    })
+                                }
+                            }
+
+                            if (ItemExists == false) {
+                                var ItemID = functions.MakeID();
+                                const Item = { "templateId": item, "attributes": { "max_level_bonus": 0, "level": 1, "item_seen": false, "xp": 0, "variants": [], "favorite": false }, "quantity": FreeTier[item] }
+
+                                athena.items[ItemID] = Item;
+
+                                MultiUpdate[0].profileChanges.push({
+                                    "changeType": "itemAdded",
+                                    "itemId": ItemID,
+                                    "item": Item
+                                })
+                            }
+
+                            ItemExists = false;
+                        }
+
+                        lootList.push({
+                            "itemType": item,
+                            "itemGuid": item,
+                            "quantity": FreeTier[item]
+                        })
+                    }
+
+                    for (var item in PaidTier) {
+                        if (item.toLowerCase() == "token:athenaseasonxpboost") {
+                            athena.stats.attributes.season_match_boost += PaidTier[item];
+
+                            MultiUpdate[0].profileChanges.push({
+                                "changeType": "statModified",
+                                "name": "season_match_boost",
+                                "value": athena.stats.attributes.season_match_boost
+                            })
+                        }
+
+                        if (item.toLowerCase() == "token:athenaseasonfriendxpboost") {
+                            athena.stats.attributes.season_friend_match_boost += PaidTier[item];
+
+                            MultiUpdate[0].profileChanges.push({
+                                "changeType": "statModified",
+                                "name": "season_friend_match_boost",
+                                "value": athena.stats.attributes.season_friend_match_boost
+                            })
+                        }
+
+                        if (item.toLowerCase().startsWith("currency:mtx")) {
+                            for (var key in profile.items) {
+                                if (profile.items[key].templateId.toLowerCase().startsWith("currency:mtx")) {
+                                    if (profile.items[key].attributes.platform.toLowerCase() == profile.stats.attributes.current_mtx_platform.toLowerCase() || profile.items[key].attributes.platform.toLowerCase() == "shared") {
+                                        profile.items[key].quantity += PaidTier[item];
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
+                        if (item.toLowerCase().startsWith("homebasebanner")) {
+                            for (var key in profile.items) {
+                                if (profile.items[key].templateId.toLowerCase() == item.toLowerCase()) {
+                                    profile.items[key].attributes.item_seen = false;
+                                    ItemExists = true;
+
+                                    ApplyProfileChanges.push({
+                                        "changeType": "itemAttrChanged",
+                                        "itemId": key,
+                                        "attributeName": "item_seen",
+                                        "attributeValue": profile.items[key].attributes.item_seen
+                                    })
+                                }
+                            }
+
+                            if (ItemExists == false) {
+                                var ItemID = functions.MakeID();
+                                var Item = { "templateId": item, "attributes": { "item_seen": false }, "quantity": 1 };
+
+                                profile.items[ItemID] = Item;
+
+                                ApplyProfileChanges.push({
+                                    "changeType": "itemAdded",
+                                    "itemId": ItemID,
+                                    "item": Item
+                                })
+                            }
+                            ItemExists = false;
+                        }
+
+                        if (item.toLowerCase().startsWith("athena")) {
+                            for (var key in athena.items) {
+                                if (athena.items[key].templateId.toLowerCase() == item.toLowerCase()) {
+                                    athena.items[key].attributes.item_seen = false;
+                                    ItemExists = true;
+
+                                    MultiUpdate[0].profileChanges.push({
+                                        "changeType": "itemAttrChanged",
+                                        "itemId": key,
+                                        "attributeName": "item_seen",
+                                        "attributeValue": athena.items[key].attributes.item_seen
+                                    })
+                                }
+                            }
+
+                            if (ItemExists == false) {
+                                var ItemID = functions.MakeID();
+                                const Item = { "templateId": item, "attributes": { "max_level_bonus": 0, "level": 1, "item_seen": false, "xp": 0, "variants": [], "favorite": false }, "quantity": PaidTier[item] }
+
+                                athena.items[ItemID] = Item;
+
+                                MultiUpdate[0].profileChanges.push({
+                                    "changeType": "itemAdded",
+                                    "itemId": ItemID,
+                                    "item": Item
+                                })
+                            }
+
+                            ItemExists = false;
+                        }
+
+                        lootList.push({
+                            "itemType": item,
+                            "itemGuid": item,
+                            "quantity": PaidTier[item]
+                        })
+                    }
+                }
+
+                var GiftBoxID = functions.MakeID();
+                var GiftBox = { "templateId": 8 <= 4 ? "GiftBox:gb_battlepass" : "GiftBox:gb_battlepasspurchased", "attributes": { "max_level_bonus": 0, "fromAccountId": "", "lootList": lootList } }
+
+                if (8 > 2) {
+                    profile.items[GiftBoxID] = GiftBox;
+
+                    ApplyProfileChanges.push({
+                        "changeType": "itemAdded",
+                        "itemId": GiftBoxID,
+                        "item": GiftBox
+                    })
+                }
+
+                MultiUpdate[0].profileChanges.push({
+                    "changeType": "statModified",
+                    "name": "book_purchased",
+                    "value": athena.stats.attributes.book_purchased
+                })
+
+                MultiUpdate[0].profileChanges.push({
+                    "changeType": "statModified",
+                    "name": "book_level",
+                    "value": athena.stats.attributes.book_level
+                })
+            }
+
+            if (BattlePass.tierOfferId == offerId) {
+                var lootList: any[] = [];
+                var StartingTier = athena.stats.attributes.book_level;
+                var EndingTier;
+                athena.stats.attributes.book_level += req.body.purchaseQuantity || 1;
+                EndingTier = athena.stats.attributes.book_level;
+
+                for (let i = StartingTier; i < EndingTier; i++) {
+                    var FreeTier = BattlePass.freeRewards[i] || {};
+                    var PaidTier = BattlePass.paidRewards[i] || {};
+
+                    for (var item in FreeTier) {
+                        if (item.toLowerCase() == "token:athenaseasonxpboost") {
+                            athena.stats.attributes.season_match_boost += FreeTier[item];
+
+                            MultiUpdate[0].profileChanges.push({
+                                "changeType": "statModified",
+                                "name": "season_match_boost",
+                                "value": athena.stats.attributes.season_match_boost
+                            })
+                        }
+
+                        if (item.toLowerCase() == "token:athenaseasonfriendxpboost") {
+                            athena.stats.attributes.season_friend_match_boost += FreeTier[item];
+
+                            MultiUpdate[0].profileChanges.push({
+                                "changeType": "statModified",
+                                "name": "season_friend_match_boost",
+                                "value": athena.stats.attributes.season_friend_match_boost
+                            })
+                        }
+
+                        if (item.toLowerCase().startsWith("currency:mtx")) {
+                            for (var key in profile.items) {
+                                if (profile.items[key].templateId.toLowerCase().startsWith("currency:mtx")) {
+                                    if (profile.items[key].attributes.platform.toLowerCase() == profile.stats.attributes.current_mtx_platform.toLowerCase() || profile.items[key].attributes.platform.toLowerCase() == "shared") {
+                                        profile.items[key].quantity += FreeTier[item];
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
+                        if (item.toLowerCase().startsWith("homebasebanner")) {
+                            for (var key in profile.items) {
+                                if (profile.items[key].templateId.toLowerCase() == item.toLowerCase()) {
+                                    profile.items[key].attributes.item_seen = false;
+                                    ItemExists = true;
+
+                                    ApplyProfileChanges.push({
+                                        "changeType": "itemAttrChanged",
+                                        "itemId": key,
+                                        "attributeName": "item_seen",
+                                        "attributeValue": profile.items[key].attributes.item_seen
+                                    })
+                                }
+                            }
+
+                            if (ItemExists == false) {
+                                var ItemID = functions.MakeID();
+                                var Item = { "templateId": item, "attributes": { "item_seen": false }, "quantity": 1 };
+
+                                profile.items[ItemID] = Item;
+
+                                ApplyProfileChanges.push({
+                                    "changeType": "itemAdded",
+                                    "itemId": ItemID,
+                                    "item": Item
+                                })
+                            }
+
+                            ItemExists = false;
+                        }
+
+                        if (item.toLowerCase().startsWith("athena")) {
+                            for (var key in athena.items) {
+                                if (athena.items[key].templateId.toLowerCase() == item.toLowerCase()) {
+                                    athena.items[key].attributes.item_seen = false;
+                                    ItemExists = true;
+
+                                    MultiUpdate[0].profileChanges.push({
+                                        "changeType": "itemAttrChanged",
+                                        "itemId": key,
+                                        "attributeName": "item_seen",
+                                        "attributeValue": athena.items[key].attributes.item_seen
+                                    })
+                                }
+                            }
+
+                            if (ItemExists == false) {
+                                var ItemID = functions.MakeID();
+                                const Item = { "templateId": item, "attributes": { "max_level_bonus": 0, "level": 1, "item_seen": false, "xp": 0, "variants": [], "favorite": false }, "quantity": FreeTier[item] }
+
+                                athena.items[ItemID] = Item;
+
+                                MultiUpdate[0].profileChanges.push({
+                                    "changeType": "itemAdded",
+                                    "itemId": ItemID,
+                                    "item": Item
+                                })
+                            }
+
+                            ItemExists = false;
+                        }
+
+                        lootList.push({
+                            "itemType": item,
+                            "itemGuid": item,
+                            "quantity": FreeTier[item]
+                        })
+                    }
+
+                    for (var item in PaidTier) {
+                        if (item.toLowerCase() == "token:athenaseasonxpboost") {
+                            athena.stats.attributes.season_match_boost += PaidTier[item];
+
+                            MultiUpdate[0].profileChanges.push({
+                                "changeType": "statModified",
+                                "name": "season_match_boost",
+                                "value": athena.stats.attributes.season_match_boost
+                            })
+                        }
+
+                        if (item.toLowerCase() == "token:athenaseasonfriendxpboost") {
+                            athena.stats.attributes.season_friend_match_boost += PaidTier[item];
+
+                            MultiUpdate[0].profileChanges.push({
+                                "changeType": "statModified",
+                                "name": "season_friend_match_boost",
+                                "value": athena.stats.attributes.season_friend_match_boost
+                            })
+                        }
+
+                        if (item.toLowerCase().startsWith("currency:mtx")) {
+                            for (var key in profile.items) {
+                                if (profile.items[key].templateId.toLowerCase().startsWith("currency:mtx")) {
+                                    if (profile.items[key].attributes.platform.toLowerCase() == profile.stats.attributes.current_mtx_platform.toLowerCase() || profile.items[key].attributes.platform.toLowerCase() == "shared") {
+                                        profile.items[key].quantity += PaidTier[item];
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
+                        if (item.toLowerCase().startsWith("homebasebanner")) {
+                            for (var key in profile.items) {
+                                if (profile.items[key].templateId.toLowerCase() == item.toLowerCase()) {
+                                    profile.items[key].attributes.item_seen = false;
+                                    ItemExists = true;
+
+                                    ApplyProfileChanges.push({
+                                        "changeType": "itemAttrChanged",
+                                        "itemId": key,
+                                        "attributeName": "item_seen",
+                                        "attributeValue": profile.items[key].attributes.item_seen
+                                    })
+                                }
+                            }
+
+                            if (ItemExists == false) {
+                                var ItemID = functions.MakeID();
+                                var Item = { "templateId": item, "attributes": { "item_seen": false }, "quantity": 1 };
+
+                                profile.items[ItemID] = Item;
+
+                                ApplyProfileChanges.push({
+                                    "changeType": "itemAdded",
+                                    "itemId": ItemID,
+                                    "item": Item
+                                })
+                            }
+
+                            ItemExists = false;
+                        }
+
+                        if (item.toLowerCase().startsWith("athena")) {
+                            for (var key in athena.items) {
+                                if (athena.items[key].templateId.toLowerCase() == item.toLowerCase()) {
+                                    athena.items[key].attributes.item_seen = false;
+                                    ItemExists = true;
+
+                                    MultiUpdate[0].profileChanges.push({
+                                        "changeType": "itemAttrChanged",
+                                        "itemId": key,
+                                        "attributeName": "item_seen",
+                                        "attributeValue": athena.items[key].attributes.item_seen
+                                    })
+                                }
+                            }
+
+                            if (ItemExists == false) {
+                                var ItemID = functions.MakeID();
+                                const Item = { "templateId": item, "attributes": { "max_level_bonus": 0, "level": 1, "item_seen": false, "xp": 0, "variants": [], "favorite": false }, "quantity": PaidTier[item] }
+
+                                athena.items[ItemID] = Item;
+
+                                MultiUpdate[0].profileChanges.push({
+                                    "changeType": "itemAdded",
+                                    "itemId": ItemID,
+                                    "item": Item
+                                })
+                            }
+
+                            ItemExists = false;
+                        }
+
+                        lootList.push({
+                            "itemType": item,
+                            "itemGuid": item,
+                            "quantity": PaidTier[item]
+                        })
+                    }
+                }
+
+                var GiftBoxID = functions.MakeID();
+                var GiftBox = { "templateId": "GiftBox:gb_battlepass", "attributes": { "max_level_bonus": 0, "fromAccountId": "", "lootList": lootList } }
+
+                if (8 > 2) {
+                    profile.items[GiftBoxID] = GiftBox;
+
+                    ApplyProfileChanges.push({
+                        "changeType": "itemAdded",
+                        "itemId": GiftBoxID,
+                        "item": GiftBox
+                    })
+                }
+
+                MultiUpdate[0].profileChanges.push({
+                    "changeType": "statModified",
+                    "name": "book_level",
+                    "value": athena.stats.attributes.book_level
+                })
+            }
+
+            if (MultiUpdate[0].profileChanges.length > 0) {
+                athena.rvn += 1;
+                athena.commandRevision += 1;
+                athena.updated = new Date().toISOString();
+
+                MultiUpdate[0].profileRevision = athena.rvn;
+                MultiUpdate[0].profileCommandRevision = athena.commandRevision;
+            }
+
+            if (ApplyProfileChanges.length > 0) {
+                profile.rvn += 1;
+                profile.commandRevision += 1;
+                profile.updated = new Date().toISOString();
+
+                await profiles?.updateOne({ $set: { [`profiles.${req.query.profileId}`]: profile, [`profiles.athena`]: athena } });
+            }
+
+            if (QueryRevision != ProfileRevisionCheck) {
+                ApplyProfileChanges = [{
+                    "changeType": "fullProfileUpdate",
+                    "profile": profile
+                }];
+            }
+
+            res.json({
+                profileRevision: profile.rvn || 0,
+                profileId: req.query.profileId,
+                profileChangesBaseRevision: BaseRevision,
+                profileChanges: ApplyProfileChanges,
+                notifications: Notifications,
+                profileCommandRevision: profile.commandRevision || 0,
+                serverTime: new Date().toISOString(),
+                multiUpdate: MultiUpdate,
+                responseVersion: 1
+            });
+
+            if (ApplyProfileChanges.length > 0) {
+                await profiles?.updateOne({ $set: { [`profiles.${req.query.profileId}`]: profile, [`profiles.athena`]: athena } });
+            }
+
+            return;
+        }
+    }
 
     switch (true) {
         case /^BR(Daily|Weekly|Season)Storefront$/.test(findOfferId.name):
