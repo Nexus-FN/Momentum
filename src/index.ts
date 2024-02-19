@@ -34,7 +34,9 @@ const app = express();
 const PORT = Safety.env.PORT;
 
 await Safety.airbag();
-await client.login(process.env.BOT_TOKEN);
+
+const bottoken = "TOKENHERE";
+await client.login(bottoken);
 
 let redisTokens: any;
 let tokens: any;
