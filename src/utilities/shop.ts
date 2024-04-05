@@ -17,12 +17,12 @@ class Shop {
                 method: 'GET',
             });
         } catch (error) {
-            console.error('Failed to fetch shop data:', error);
+            log.error('Failed to fetch shop data:', error);
             return [false];
         }
 
         if (!shopResponse.ok) {
-            console.error('Shop response not OK:', shopResponse.statusText);
+            log.error('Shop response not OK:', shopResponse.statusText);
             return [false];
         }
 
