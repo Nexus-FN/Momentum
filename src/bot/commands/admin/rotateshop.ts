@@ -77,6 +77,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
             .setTimestamp();
 
         await interaction.editReply({ embeds: [embed], ephemeral: true });
+        log.shop("Shop has been manually rotated.")
     } catch (error) {
         await interaction.editReply({ content: `Failed to rotate the shop: ${error.message}`, ephemeral: true });
     }
