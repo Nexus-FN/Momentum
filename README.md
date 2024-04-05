@@ -15,7 +15,7 @@ Huge thanks to @thisisanto on Discord for the ESM rewrite and many code improvem
 - [x] Super fast and lightweight
 - [x] Robust account system
 - [x] Easy to use and set up
-- [x] Customizable
+- [x] Customizable to your liking
 - [x] Frequently updated
 - [x] 2FA Feature
 - [x] New item shop every day **automatically** using Cron (no longer needs loopkey)
