@@ -12,6 +12,54 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: ChatInputCommandInteraction) {
     await interaction.deferReply({ ephemeral: true });
 
+    const shopItems = await shop.updateShop();
+    const rowCount = 2; // Number of rows
+    const maxItemsPerRow = Math.ceil(shopItems.length / rowCount);
+    const rowWidth = 800; // Maximum width for each row
+    const columnHeight = 540; // Maximum height for each column
+    const canvasWidth = rowWidth * Math.ceil(shopItems.length / rowCount);
+    const canvasHeight = columnHeight * rowCount;
+
+    const canvas = Canvas.createCanvas(canvasWidth, canvasHeight);
+    const context = canvas.getContext('2d');
+
+    // Clear the canvas
+    context.clearRect(0, 0, canvas.width, canvas.height);
+
+    const backgroundImage = await Canvas.loadImage('https://i.redd.it/zs2ec4w041251.png');
+    context.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
+
+    const imagePromises = shopItems.map(async (item, i) => {
+        const imageBuffer = await fetch(item.images.icon).then((res: any) => res.arrayBuffer());
+        const loadImage = await Canvas.loadImage(imageBuffer);
+
+        const aspectRatio = loadImage.width / loadImage.height;
+        const imageHeight = columnHeight;
+        const imageWidth = imageHeight * aspectRatio;
+
+        const rowIndex = Math.floor(i / maxItemsPerRow);
+        const columnIndex = i % maxItemsPerRow;
+        const xOffset = columnIndex * rowWidth;
+        const yOffset = rowIndex * columnHeight;
+
+        // Save the canvas state before drawing the image
+        context.save();
+
+        // Translate the canvas to the correct position and scale it to the correct size
+        context.translate(xOffset, yOffset);
+        context.scale(imageWidth / loadImage.width, imageHeight / loadImage.height);
+
+        // Draw the image
+        context.drawImage(loadImage, 0, 0);
+
+        // Restore the canvas state after drawing the image
+        context.restore();
+    });
+
+    await Promise.all(imagePromises);
+
+    const attachment = new AttachmentBuilder(await canvas.encode('png'), { name: 'combined_shop.png' });
+    
     try {
         const updatedItems = await shop.updateShop();
         if (!Array.isArray(updatedItems) || updatedItems.length === 0) {
