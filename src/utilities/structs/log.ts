@@ -30,6 +30,11 @@ class logger {
         }
     }
 
+
+ public shop(message: string) {
+        console.log(`\x1b[37m[\x1b[33mSHOP\x1b[0m\x1b[37m] ${message}`);
+    }
+
     public warn(message: string) {
         console.log(`\x1b[37m[\x1b[33mWARN\x1b[0m\x1b[37m] ${message}`);
     }
