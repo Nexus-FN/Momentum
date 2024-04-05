@@ -18,7 +18,7 @@ Huge thanks to @thisisanto on Discord for the ESM rewrite and many code improvem
 - [x] Customizable
 - [x] Frequently updated
 - [x] 2FA Feature
-- [x] New item shop every day **automatically**
+- [x] New item shop every day **automatically** using Cron (no longer needs loopkey)
 - [x] Fully featured matchmaker with queue
 - [x] Working gifting
 
