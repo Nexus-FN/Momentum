@@ -1,7 +1,7 @@
 import { ChatInputCommandInteraction, EmbedBuilder, AttachmentBuilder, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
 import Canvas from 'canvas';
 import shop from '../../../utilities/shop.js';
-import client from '../../../client.js'; 
+import client from '../../index.js'; 
 
 export const data = new SlashCommandBuilder()
     .setName('rotateshop')
