@@ -1,3 +1,6 @@
+### still in dev
+
+
 ![Banner](https://i.ibb.co/bgZWZT0/B07-DF3-FC-D2-E7-4-AD5-9935-04-C441-BDFEBD.png)
 
 [![pnpm](https://img.shields.io/badge/maintained%20with-pnpm-cc00ff.svg?style=for-the-badge&logo=pnpm)](https://pnpm.io/) 
@@ -31,3 +34,4 @@ Huge thanks to @thisisanto on Discord for the ESM rewrite and many code improvem
 ## Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=Nexus-FN/Momentum&type=Date)](https://star-history.com/#Nexus-FN/Momentum&Date)
+
