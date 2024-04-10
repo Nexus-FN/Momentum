@@ -220,7 +220,8 @@ app.get("/fortnite/api/cloudstorage/system", async (req, res) => {
 });
 
 app.get("/fortnite/api/cloudstorage/system/:file", async (req, res) => {
-
+    if (req.params.file.includes("..")) return res.status(404).end();
+        if (req.params.file.includes("~")) return res.status(404).end();
     if (Safety.env.USE_S3) {
         const fileName = req.params.file;
         const key = `CloudStorage/${Safety.env.NAME || ""}/${fileName}`;
@@ -393,3 +394,5 @@ app.put("/fortnite/api/cloudstorage/user/*/:file", verifyToken, async (req: any,
 });
 
 export default app;
+
+
