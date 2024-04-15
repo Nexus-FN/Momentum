@@ -1,7 +1,6 @@
 import { ChatInputCommandInteraction, EmbedBuilder, AttachmentBuilder, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
-import Canvas from 'canvas';
+import Canvas from '@napi-rs/canvas';
 import shop from '../../../utilities/shop.js';
-import client from '../../index.js'; 
 
 export const data = new SlashCommandBuilder()
     .setName('rotateshop')
@@ -68,14 +67,14 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         })
         .setImage('attachment://combined_shop.png');
 
-    const targetChannelId = 'YOUR_CHANNEL_ID_HERE'; 
-    const channel = await client.channels.fetch(targetChannelId);
+    const targetChannelId = 'YOUR_CHANNEL_ID_HERE';
+    const channel = await interaction.client.channels.fetch(targetChannelId);
     if (!channel) throw new Error('Channel not found');
     
     await channel.send({ 
         embeds: [specifiedChannelEmbed], 
         files: [new AttachmentBuilder(await canvas.encode('png'), { name: 'combined_shop.png' })] 
     });
-    
+
     log.shop("Shop has been manually rotated.");
 }
