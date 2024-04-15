@@ -1,3 +1,6 @@
+
+
+
 ![Banner](https://i.ibb.co/bgZWZT0/B07-DF3-FC-D2-E7-4-AD5-9935-04-C441-BDFEBD.png)
 
 [![pnpm](https://img.shields.io/badge/maintained%20with-pnpm-cc00ff.svg?style=for-the-badge&logo=pnpm)](https://pnpm.io/) 
@@ -15,10 +18,10 @@ Huge thanks to @thisisanto on Discord for the ESM rewrite and many code improvem
 - [x] Super fast and lightweight
 - [x] Robust account system
 - [x] Easy to use and set up
-- [x] Customizable
+- [x] Customizable to your liking
 - [x] Frequently updated
 - [x] 2FA Feature
-- [x] New item shop every day **automatically**
+- [x] New item shop every day **automatically** using Cron (no longer needs loopkey)
 - [x] Fully featured matchmaker with queue
 - [x] Working gifting
 
@@ -31,3 +34,4 @@ Huge thanks to @thisisanto on Discord for the ESM rewrite and many code improvem
 ## Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=Nexus-FN/Momentum&type=Date)](https://star-history.com/#Nexus-FN/Momentum&Date)
+
